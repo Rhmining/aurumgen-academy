@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --font-sans: "Manrope", "Avenir Next", "Segoe UI", sans-serif;
+  --font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  --background: 244 241 234;
+  --foreground: 14 28 38;
+  --panel: 255 255 255;
+  --muted: 94 112 121;
+  --line: 220 214 203;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: 11 20 28;
+  --foreground: 240 234 226;
+  --panel: 18 31 42;
+  --muted: 165 177 185;
+  --line: 43 62 71;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(199, 147, 49, 0.2), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(214, 106, 78, 0.15), transparent 22%),
+    rgb(var(--background));
+  color: rgb(var(--foreground));
+  font-family: var(--font-sans), sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.page-shell {
+  min-height: 100vh;
+}
+
+.surface {
+  background: rgba(var(--panel), 0.84);
+  border: 1px solid rgba(var(--line), 0.8);
+  box-shadow: 0 20px 45px rgba(14, 28, 38, 0.08);
+  backdrop-filter: blur(18px);
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--line), 0.85);
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.grid-cards {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
