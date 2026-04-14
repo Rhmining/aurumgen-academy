@@ -17,11 +17,15 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-black/5 bg-[rgba(var(--background),0.78)] backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <Link href="/" className="min-w-0">
-          <BrandLogo className="max-w-[220px]" markClassName="h-10 w-10" textClassName="truncate text-base md:text-lg" />
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-3.5">
+        <Link href="/" className="shrink-0">
+          <BrandLogo
+            className="min-w-fit"
+            markClassName="h-11 w-11 md:h-12 md:w-12"
+            textClassName="min-w-fit"
+          />
         </Link>
-        <nav className="hidden gap-6 text-sm md:flex">
+        <nav className="hidden items-center gap-6 text-sm md:flex">
           {links.map((link) => (
             <Link key={link.href} href={link.href} className="text-[rgb(var(--muted))] transition hover:text-[rgb(var(--foreground))]">
               {link.label}

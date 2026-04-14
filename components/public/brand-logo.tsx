@@ -12,11 +12,11 @@ export function BrandLogo({
   showWordmark?: boolean;
 }) {
   return (
-    <span className={clsx("inline-flex items-center gap-3", className)}>
+    <span className={clsx("inline-flex items-center gap-3.5 leading-none", className)}>
       <svg
         viewBox="0 0 96 96"
         aria-hidden="true"
-        className={clsx("h-11 w-11 shrink-0 drop-shadow-[0_6px_14px_rgba(240,166,0,0.25)]", markClassName)}
+        className={clsx("h-11 w-11 shrink-0 overflow-visible drop-shadow-[0_6px_14px_rgba(240,166,0,0.25)]", markClassName)}
       >
         <defs>
           <linearGradient id="aurumgen-gold" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -39,9 +39,13 @@ export function BrandLogo({
       </svg>
 
       {showWordmark ? (
-        <span className={clsx("font-display text-lg font-semibold tracking-[0.08em] text-[#DAA300]", textClassName)}>
-          AURUMGEN
-          <span className="ml-2 tracking-[0.04em] text-[rgb(var(--foreground))]">Academy</span>
+        <span className={clsx("flex min-w-0 flex-col", textClassName)}>
+          <span className="font-display text-[1.02rem] font-semibold tracking-[0.1em] text-[#DAA300] md:text-[1.08rem]">
+            AURUMGEN
+          </span>
+          <span className="mt-1 font-sans text-[0.78rem] font-semibold uppercase tracking-[0.22em] text-[rgb(var(--foreground))] opacity-80 md:text-[0.8rem]">
+            Academy
+          </span>
         </span>
       ) : null}
     </span>
