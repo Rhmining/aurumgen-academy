@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useTheme } from "@/components/providers/theme-provider";
+import { BrandLogo } from "@/components/public/brand-logo";
 
 const links = [
   { href: "/", label: "Beranda" },
@@ -17,8 +18,8 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-30 border-b border-black/5 bg-[rgba(var(--background),0.78)] backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <Link href="/" className="font-display text-xl font-semibold tracking-tight">
-          AURUMGEN Academy
+        <Link href="/" className="min-w-0">
+          <BrandLogo className="max-w-[220px]" markClassName="h-10 w-10" textClassName="truncate text-base md:text-lg" />
         </Link>
         <nav className="hidden gap-6 text-sm md:flex">
           {links.map((link) => (
