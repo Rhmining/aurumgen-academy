@@ -7,6 +7,7 @@ const links = [
   { href: "/", label: "Beranda" },
   { href: "/programs", label: "Program" },
   { href: "/pathway", label: "Pathway" },
+  { href: "/contact", label: "Konsultasi" },
   { href: "/login", label: "Login" }
 ];
 

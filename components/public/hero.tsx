@@ -14,10 +14,17 @@ export function Hero() {
             AURUMGEN Academy menyatukan pathway IGCSE, IB, dan kesiapan universitas dengan portal siswa,
             parent intelligence, teacher workflow, dan knowledge hub untuk AI internal.
           </p>
+          <p className="max-w-2xl text-sm text-[rgb(var(--muted))]">
+            Dirancang untuk keluarga yang membutuhkan ritme belajar yang lebih rapi, komunikasi lintas peran yang konsisten,
+            dan dukungan akademik yang tidak berhenti di luar jam kelas.
+          </p>
         </div>
         <div className="flex flex-wrap gap-4">
           <Link href="/portal/student" className="rounded-full bg-ink px-6 py-3 text-sm font-medium text-white">
             Masuk portal siswa
+          </Link>
+          <Link href="/contact" className="rounded-full border border-black/10 px-6 py-3 text-sm font-medium">
+            Konsultasi awal
           </Link>
           <Link href="/teacher" className="rounded-full border border-black/10 px-6 py-3 text-sm font-medium">
             Buka dashboard guru
@@ -28,11 +35,11 @@ export function Hero() {
       <div className="surface rounded-[2rem] p-6">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <p className="text-sm text-[rgb(var(--muted))]">Snapshot hari ini</p>
-            <h2 className="font-display text-3xl">Control tower belajar</h2>
+            <p className="text-sm text-[rgb(var(--muted))]">Kapabilitas inti</p>
+            <h2 className="font-display text-3xl">Apa yang langsung didapat keluarga</h2>
           </div>
           <div className="rounded-2xl bg-gold/15 px-4 py-2 text-sm font-semibold text-gold">
-            Live
+            Live platform
           </div>
         </div>
         <div className="grid-cards">
@@ -43,6 +50,9 @@ export function Hero() {
             </div>
           ))}
         </div>
+        <p className="mt-5 text-xs text-[rgb(var(--muted))]">
+          Fokus halaman publik ini adalah menjelaskan struktur layanan dan pengalaman belajar, bukan menampilkan angka operasional yang bersifat internal.
+        </p>
       </div>
     </section>
   );

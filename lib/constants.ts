@@ -9,8 +9,8 @@ export const roles = [
 ] as const;
 
 export const quickStats = [
-  { label: "Siswa aktif", value: "1.248" },
-  { label: "Materi hidup", value: "386" },
-  { label: "Soal bank", value: "7.920" },
-  { label: "Dokumen AI", value: "128" }
+  { label: "Pathway akademik", value: "IGCSE • IB • University" },
+  { label: "Peran utama", value: "Siswa • Ortu • Guru" },
+  { label: "Pendampingan", value: "Portal + AI-RUM + Review" },
+  { label: "Operasional", value: "Knowledge hub terintegrasi" }
 ];

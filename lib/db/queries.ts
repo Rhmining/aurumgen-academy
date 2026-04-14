@@ -1,9 +1,9 @@
 import type { DashboardMetric } from "@/lib/db/types";
 
 export const publicMetrics: DashboardMetric[] = [
-  { label: "Lesson intelligence", value: "92%", detail: "Saran adaptif untuk jalur IGCSE dan IB." },
-  { label: "Weekly mastery", value: "18 jam", detail: "Waktu belajar aktif yang terpantau." },
-  { label: "AI feedback cycle", value: "< 2 menit", detail: "Respon AI-RUM untuk refleksi siswa." }
+  { label: "Pembelajaran berlapis", value: "3 lapis", detail: "Siswa, orang tua, dan guru membaca progres dari konteks yang sama." },
+  { label: "Respons belajar", value: "24/7", detail: "AI-RUM siap membantu eksplorasi konsep, ringkasan, dan drill." },
+  { label: "Operasional internal", value: "Terhubung", detail: "Knowledge base, review queue, dan teacher workflow berjalan dalam satu platform." }
 ];
 
 export const teacherSignals = [
