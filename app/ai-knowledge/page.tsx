@@ -1,20 +1,17 @@
 import Link from "next/link";
 import { AiKnowledgeShell } from "@/components/ai-knowledge/ai-knowledge-shell";
-import {
-  aiKnowledgeMetrics,
-  aiKnowledgeQualityChecks,
-  aiKnowledgeQueue,
-  aiKnowledgeTriage
-} from "@/lib/db/queries";
+import { getAiKnowledgeDashboardData } from "@/lib/db/dashboard";
 
-export default function AiKnowledgePage() {
+export default async function AiKnowledgePage() {
+  const data = await getAiKnowledgeDashboardData();
+
   return (
     <AiKnowledgeShell
       title="Knowledge Overview"
       description="Prioritaskan ingestion, review kualitas, dan kesiapan retrieval untuk AI-RUM."
     >
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {aiKnowledgeMetrics.map((metric) => (
+        {data.metrics.map((metric) => (
           <article key={metric.label} className="surface rounded-[1.75rem] p-6">
             <p className="text-sm text-[rgb(var(--muted))]">{metric.label}</p>
             <p className="mt-4 font-display text-4xl">{metric.value}</p>
@@ -36,7 +33,7 @@ export default function AiKnowledgePage() {
           </div>
 
           <div className="mt-6 space-y-4">
-            {aiKnowledgeTriage.map((item) => (
+            {data.triage.map((item) => (
               <Link
                 key={item.title}
                 href={item.href}
@@ -61,7 +58,7 @@ export default function AiKnowledgePage() {
           <p className="eyebrow">Quality checks</p>
           <h2 className="mt-3 font-display text-3xl">Checklist harian AI admin</h2>
           <div className="mt-6 space-y-3">
-            {aiKnowledgeQualityChecks.map((item) => (
+            {data.qualityChecks.map((item) => (
               <div key={item.title} className="rounded-[1.5rem] bg-black/5 p-5 dark:bg-white/5">
                 <h3 className="font-semibold">{item.title}</h3>
                 <p className="mt-2 text-sm text-[rgb(var(--muted))]">{item.detail}</p>
@@ -84,7 +81,7 @@ export default function AiKnowledgePage() {
           </div>
 
           <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {aiKnowledgeQueue.map((item) => (
+            {data.queueSnapshot.map((item) => (
               <article key={item.name} className="rounded-[1.5rem] border border-black/5 p-5 dark:border-white/10">
                 <h3 className="font-semibold">{item.name}</h3>
                 <p className="mt-3 text-sm text-[rgb(var(--muted))]">{item.state}</p>

@@ -2,16 +2,18 @@ import Link from "next/link";
 import { DeveloperShell } from "@/components/developer/developer-shell";
 import { AirumAnalyticsPanel } from "@/components/developer/airum-analytics-panel";
 import { SystemHealthPanel } from "@/components/developer/system-health-panel";
-import { developerOverviewCards, developerRunbook } from "@/lib/db/queries";
+import { getDeveloperDashboardData } from "@/lib/db/dashboard";
 
-export default function DeveloperPage() {
+export default async function DeveloperPage() {
+  const data = await getDeveloperDashboardData();
+
   return (
     <DeveloperShell
       title="Developer Overview"
       description="Observability, model governance, dan tindakan prioritas platform AURUMGEN."
     >
       <section className="grid gap-4 md:grid-cols-3">
-        {developerOverviewCards.map((item) => (
+        {data.metrics.map((item) => (
           <article key={item.label} className="surface rounded-[1.75rem] p-6">
             <p className="text-sm text-[rgb(var(--muted))]">{item.label}</p>
             <p className="mt-4 font-display text-3xl">{item.value}</p>
@@ -33,7 +35,7 @@ export default function DeveloperPage() {
           </div>
 
           <div className="mt-6 space-y-4">
-            {developerRunbook.map((item) => (
+            {data.runbook.map((item) => (
               <Link
                 key={item.title}
                 href={item.href}
@@ -50,23 +52,7 @@ export default function DeveloperPage() {
           <p className="eyebrow">Shortcuts</p>
           <h2 className="mt-3 font-display text-3xl">Area yang paling sering dibuka</h2>
           <div className="mt-6 grid gap-3">
-            {[
-              {
-                href: "/developer/models",
-                title: "Audit model config",
-                detail: "Pastikan responses, evaluator, dan embedding model sesuai environment live."
-              },
-              {
-                href: "/developer/costs",
-                title: "Pantau biaya",
-                detail: "Baca cost exposure dan cari area prompt atau model yang perlu dihemat."
-              },
-              {
-                href: "/developer/pipeline",
-                title: "Periksa pipeline",
-                detail: "Cek alur ingestion, retrieval, evaluator, dan fallback."
-              }
-            ].map((action) => (
+            {data.shortcuts.map((action) => (
               <Link
                 key={action.href}
                 href={action.href}

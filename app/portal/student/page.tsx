@@ -1,21 +1,18 @@
 import Link from "next/link";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { AirumPanel } from "@/components/airum/airum-panel";
-import {
-  studentMomentum,
-  studentOverviewMetrics,
-  studentPriorityQueue,
-  studentWeeklyGoals
-} from "@/lib/db/queries";
+import { getStudentDashboardData } from "@/lib/db/dashboard";
 
-export default function StudentPortalPage() {
+export default async function StudentPortalPage() {
+  const data = await getStudentDashboardData();
+
   return (
     <PortalShell
       title="Student Portal"
       description="Lihat target minggu ini, materi prioritas, dan momentum belajar dalam satu tampilan."
     >
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {studentOverviewMetrics.map((metric) => (
+        {data.metrics.map((metric) => (
           <article key={metric.label} className="surface rounded-[1.75rem] p-6">
             <p className="text-sm text-[rgb(var(--muted))]">{metric.label}</p>
             <p className="mt-4 font-display text-4xl">{metric.value}</p>
@@ -37,7 +34,7 @@ export default function StudentPortalPage() {
           </div>
 
           <div className="mt-6 space-y-4">
-            {studentPriorityQueue.map((item) => (
+            {data.priorityQueue.map((item) => (
               <Link
                 key={item.title}
                 href={item.href}
@@ -62,7 +59,7 @@ export default function StudentPortalPage() {
           <p className="eyebrow">Target minggu ini</p>
           <h2 className="mt-3 font-display text-3xl">Ritme yang perlu dijaga</h2>
           <div className="mt-6 space-y-3">
-            {studentWeeklyGoals.map((goal) => (
+            {data.weeklyGoals.map((goal) => (
               <div key={goal} className="rounded-[1.5rem] bg-black/5 px-5 py-4 text-sm dark:bg-white/5">
                 {goal}
               </div>
@@ -73,10 +70,10 @@ export default function StudentPortalPage() {
 
       <section className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
         <article className="surface rounded-[2rem] p-6">
-          <p className="eyebrow">Momentum subject</p>
-          <h2 className="mt-3 font-display text-3xl">Baca arah progresmu</h2>
+          <p className="eyebrow">Activity snapshot</p>
+          <h2 className="mt-3 font-display text-3xl">Data nyata dari penggunaanmu</h2>
           <div className="mt-6 space-y-4">
-            {studentMomentum.map((item) => (
+            {data.activity.map((item) => (
               <div key={item.subject} className="rounded-[1.5rem] border border-black/5 p-5 dark:border-white/10">
                 <div className="flex items-center justify-between gap-4">
                   <h3 className="font-semibold">{item.subject}</h3>

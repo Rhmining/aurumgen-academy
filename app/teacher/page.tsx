@@ -1,20 +1,17 @@
 import Link from "next/link";
 import { TeacherShell } from "@/components/teacher/teacher-shell";
-import {
-  teacherFocusTasks,
-  teacherOverviewMetrics,
-  teacherSignals,
-  teacherWorkflowSummary
-} from "@/lib/db/queries";
+import { getTeacherDashboardData } from "@/lib/db/dashboard";
 
-export default function TeacherDashboardPage() {
+export default async function TeacherDashboardPage() {
+  const data = await getTeacherDashboardData();
+
   return (
     <TeacherShell
       title="Teacher Dashboard"
       description="Pantau kelas, materi, soal, dan siswa yang perlu perhatian tanpa berpindah terlalu jauh."
     >
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {teacherOverviewMetrics.map((metric) => (
+        {data.metrics.map((metric) => (
           <article key={metric.label} className="surface rounded-[1.75rem] p-6">
             <p className="text-sm text-[rgb(var(--muted))]">{metric.label}</p>
             <p className="mt-4 font-display text-4xl">{metric.value}</p>
@@ -36,7 +33,7 @@ export default function TeacherDashboardPage() {
           </div>
 
           <div className="mt-6 space-y-4">
-            {teacherFocusTasks.map((task, index) => (
+            {data.focusTasks.map((task, index) => (
               <Link
                 key={task.title}
                 href={task.href}
@@ -54,7 +51,7 @@ export default function TeacherDashboardPage() {
           <p className="eyebrow">Workflow ringkas</p>
           <h2 className="mt-3 font-display text-3xl">Apa yang masih tertahan</h2>
           <div className="mt-6 space-y-4">
-            {teacherWorkflowSummary.map((item) => (
+            {data.workflow.map((item) => (
               <div key={item.stage} className="rounded-[1.5rem] bg-black/5 p-5 dark:bg-white/5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -75,30 +72,28 @@ export default function TeacherDashboardPage() {
         <article className="surface rounded-[2rem] p-6">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <p className="eyebrow">Sinyal siswa</p>
-              <h2 className="mt-3 font-display text-3xl">Intervensi dan momentum belajar</h2>
+              <p className="eyebrow">Resource terbaru</p>
+              <h2 className="mt-3 font-display text-3xl">Konten yang baru Anda sentuh</h2>
             </div>
             <Link href="/teacher/students" className="text-sm font-semibold underline-offset-4 hover:underline">
-              Lihat semua
+              Buka students
             </Link>
           </div>
 
           <div className="mt-6 space-y-4">
-            {teacherSignals.map((signal) => (
+            {data.recentResources.map((resource) => (
               <div
-                key={signal.student}
+                key={`${resource.badge}-${resource.title}`}
                 className="flex flex-col gap-4 rounded-[1.5rem] border border-black/5 p-5 md:flex-row md:items-center md:justify-between dark:border-white/10"
               >
                 <div>
-                  <p className="text-sm text-[rgb(var(--muted))]">{signal.subject}</p>
-                  <h3 className="mt-2 text-xl font-semibold">{signal.student}</h3>
+                  <p className="text-sm text-[rgb(var(--muted))]">{resource.badge}</p>
+                  <h3 className="mt-2 text-xl font-semibold">{resource.title}</h3>
+                  <p className="mt-2 text-sm text-[rgb(var(--muted))]">{resource.detail}</p>
                 </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <span className="rounded-full bg-[rgb(var(--accent-soft))] px-3 py-1 font-semibold text-[rgb(var(--foreground))]">
-                    {signal.status}
-                  </span>
-                  <span className="text-[rgb(var(--muted))]">Trend {signal.trend}</span>
-                </div>
+                <Link href={resource.href} className="text-sm font-semibold underline-offset-4 hover:underline">
+                  Buka
+                </Link>
               </div>
             ))}
           </div>
