@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { AccountPanel } from "@/components/workspace/account-panel";
 
 const sections = [
   { href: "/teacher", label: "Overview" },
@@ -52,6 +53,7 @@ export function TeacherShell({
               );
             })}
           </div>
+          <AccountPanel />
         </aside>
         <main className="space-y-6">{children}</main>
       </div>

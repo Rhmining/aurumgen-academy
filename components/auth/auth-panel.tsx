@@ -4,6 +4,7 @@ import { FormEvent, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 import { getDefaultRouteForRole } from "@/lib/auth/redirects";
+import { parseUserRole } from "@/lib/auth/get-user-role";
 import type { UserRole } from "@/lib/db/types";
 import { buildAuthCallbackUrl, sanitizeRedirectPath } from "@/lib/site-url";
 
@@ -66,8 +67,21 @@ export function AuthPanel() {
 
         if (error) throw error;
 
-        const nextRole = (data.user.user_metadata?.role as UserRole | undefined) ?? role;
-        router.push(sanitizeRedirectPath(nextTarget, getDefaultRouteForRole(nextRole)));
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", data.user.id)
+          .maybeSingle();
+
+        const resolvedRole = parseUserRole(
+          typeof profile?.role === "string"
+            ? profile.role
+            : typeof data.user.user_metadata?.role === "string"
+              ? data.user.user_metadata.role
+              : role
+        );
+
+        router.push(sanitizeRedirectPath(nextTarget, getDefaultRouteForRole(resolvedRole)));
         router.refresh();
       }
     } catch (error) {

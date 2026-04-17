@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { parseUserRole } from "@/lib/auth/get-user-role";
+import { resolveUserRole } from "@/lib/auth/resolve-role";
 import { createClient } from "@/lib/supabase/server";
 import type { UserRole } from "@/lib/db/types";
 
@@ -13,15 +13,5 @@ export const getCurrentUserRole = cache(async (): Promise<UserRole | null> => {
     return null;
   }
 
-  const metadataRole = parseUserRole(
-    typeof user.user_metadata?.role === "string" ? user.user_metadata.role : null
-  );
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  return parseUserRole(profile?.role ?? metadataRole);
+  return resolveUserRole(supabase, user);
 });

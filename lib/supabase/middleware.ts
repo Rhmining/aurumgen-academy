@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
-import { parseUserRole } from "@/lib/auth/get-user-role";
+import { getDefaultRouteForRole } from "@/lib/auth/redirects";
+import { resolveUserRole } from "@/lib/auth/resolve-role";
 import { protectedRouteGroups } from "@/lib/auth/route-guards";
 import type { UserRole } from "@/lib/db/types";
 
@@ -53,12 +54,10 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const role = parseUserRole(
-    typeof user.user_metadata?.role === "string" ? user.user_metadata.role : null
-  );
+  const role = await resolveUserRole(supabase, user);
 
   if (!allowedRoles.includes(role)) {
-    return NextResponse.redirect(new URL("/login?error=unauthorized", request.url));
+    return NextResponse.redirect(new URL(getDefaultRouteForRole(role), request.url));
   }
 
   return response;

@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { AuthPanel } from "@/components/auth/auth-panel";
+import { getDefaultRouteForRole } from "@/lib/auth/redirects";
+import { getCurrentUserRole } from "@/lib/auth/get-current-user-role";
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata({
@@ -9,7 +12,13 @@ export const metadata: Metadata = buildMetadata({
   path: "/login"
 });
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const currentRole = await getCurrentUserRole();
+
+  if (currentRole) {
+    redirect(getDefaultRouteForRole(currentRole));
+  }
+
   return (
     <section className="mx-auto grid max-w-6xl gap-8 px-6 py-20 lg:grid-cols-[0.95fr_1.05fr]">
       <div className="space-y-5">
