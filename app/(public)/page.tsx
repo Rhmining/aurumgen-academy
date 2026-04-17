@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { AirumPanel } from "@/components/airum/airum-panel";
 import { Hero } from "@/components/public/hero";
 import { IbCard } from "@/components/public/ib-card";
 import { IgcseCard } from "@/components/public/igcse-card";
+import { getDefaultRouteForRole } from "@/lib/auth/redirects";
+import { getCurrentUserRole } from "@/lib/auth/get-current-user-role";
 import { publicMetrics } from "@/lib/db/queries";
 import { buildMetadata } from "@/lib/seo";
 
@@ -48,7 +51,13 @@ const faqItems = [
   }
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const currentRole = await getCurrentUserRole();
+
+  if (currentRole) {
+    redirect(getDefaultRouteForRole(currentRole));
+  }
+
   return (
     <>
       <Hero />

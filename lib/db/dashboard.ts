@@ -15,6 +15,12 @@ type StudentDashboardData = {
   activity: Array<{ subject: string; trend: string; detail: string }>;
 };
 
+type ParentDashboardData = {
+  metrics: Array<{ label: string; value: string; detail: string }>;
+  highlights: Array<{ title: string; body: string; href: string }>;
+  recentSignals: Array<{ title: string; detail: string }>;
+};
+
 type AiKnowledgeDashboardData = {
   metrics: Array<{ label: string; value: string; detail: string }>;
   triage: Array<{ title: string; issue: string; owner: string; href: string }>;
@@ -302,6 +308,100 @@ export const getStudentDashboardData = cache(async (): Promise<StudentDashboardD
   ].slice(0, 3);
 
   return { metrics, priorityQueue, weeklyGoals, activity };
+});
+
+export const getParentDashboardData = cache(async (): Promise<ParentDashboardData> => {
+  const { supabase, user } = await getAuthedSupabase();
+  if (!user) {
+    return { metrics: [], highlights: [], recentSignals: [] };
+  }
+
+  const lastWeekIso = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  const [materialsCount, latestMaterials, activityLogs, sessions] = await Promise.all([
+    supabase
+      .from("materials")
+      .select("*", { count: "exact", head: true })
+      .in("visibility", ["portal", "published"]),
+    supabase
+      .from("materials")
+      .select("title, subject, pathway, created_at")
+      .in("visibility", ["portal", "published"])
+      .order("created_at", { ascending: false })
+      .limit(3),
+    supabase
+      .from("operational_activity_logs")
+      .select("action, entity_type, entity_id, created_at")
+      .eq("actor_id", user.id)
+      .gte("created_at", lastWeekIso)
+      .order("created_at", { ascending: false })
+      .limit(4),
+    supabase
+      .from("airum_sessions")
+      .select("id", { count: "exact", head: true })
+      .eq("owner_id", user.id)
+  ]);
+
+  const metrics = [
+    {
+      label: "Materi yang bisa dipantau",
+      value: formatCount(materialsCount.count),
+      detail: "Jumlah materi portal/published yang bisa dibaca keluarga."
+    },
+    {
+      label: "Aktivitas akun 7 hari",
+      value: formatCount(activityLogs.data?.length ?? 0),
+      detail: "Membantu memastikan parent portal benar-benar ikut dipakai."
+    },
+    {
+      label: "Sesi AI-RUM akun",
+      value: formatCount(sessions.count),
+      detail: "Jika parent memakai sesi sendiri untuk memahami materi atau konteks belajar."
+    }
+  ];
+
+  const highlights = [
+    {
+      title:
+        (latestMaterials.data ?? []).length > 0
+          ? "Baca materi terbaru yang sudah dibuka ke portal"
+          : "Belum ada materi portal terbaru",
+      body:
+        (latestMaterials.data ?? []).length > 0
+          ? `${latestMaterials.data?.[0]?.title ?? "Materi terbaru"} sudah tersedia untuk dibaca dari sudut pandang keluarga.`
+          : "Begitu teacher mempublikasikan materi, parent portal akan mulai terasa lebih hidup.",
+      href: "/portal/materials"
+    },
+    {
+      title:
+        (activityLogs.data?.length ?? 0) > 0
+          ? "Lanjutkan ritme monitoring minggu ini"
+          : "Bangun rutinitas monitoring awal",
+      body:
+        (activityLogs.data?.length ?? 0) > 0
+          ? `Sudah ada ${activityLogs.data?.length ?? 0} aktivitas parent tercatat dalam 7 hari terakhir.`
+          : "Mulai dari materials dan progress center agar konteks akademik keluarga tetap sinkron.",
+      href: "/portal/progress"
+    },
+    {
+      title: "Gunakan portal sebagai alat diskusi rumah",
+      body: "Parent portal paling berguna saat dipakai untuk membaca sinyal progres lalu menindaklanjuti dengan percakapan yang tenang dan terarah.",
+      href: "/portal/parent"
+    }
+  ];
+
+  const recentSignals = [
+    ...(latestMaterials.data ?? []).map((item) => ({
+      title: item.title,
+      detail: `${item.subject} • ${item.pathway ?? "-"} • ${hoursAgo(item.created_at) ?? "baru"}`
+    })),
+    ...(activityLogs.data ?? []).map((log) => ({
+      title: log.action,
+      detail: `${log.entity_type} • ${log.entity_id} • ${hoursAgo(log.created_at) ?? "baru"}`
+    }))
+  ].slice(0, 4);
+
+  return { metrics, highlights, recentSignals };
 });
 
 export const getAiKnowledgeDashboardData = cache(async (): Promise<AiKnowledgeDashboardData> => {
