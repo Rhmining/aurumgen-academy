@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
+import { getDefaultRouteForRole } from "@/lib/auth/redirects";
 import type { UserRole } from "@/lib/db/types";
 
 type AccountState = {
@@ -73,6 +74,14 @@ export function AccountPanel() {
       {account.email ? <p className="mt-1 text-sm text-[rgb(var(--muted))]">{account.email}</p> : null}
 
       <div className="mt-4 grid gap-2">
+        {account.role ? (
+          <Link
+            href={getDefaultRouteForRole(account.role)}
+            className="rounded-2xl border border-black/10 px-4 py-3 text-sm font-medium transition hover:bg-white dark:border-white/10 dark:hover:bg-black/20"
+          >
+            Dashboard
+          </Link>
+        ) : null}
         <Link
           href="/account"
           className="rounded-2xl border border-black/10 px-4 py-3 text-sm font-medium transition hover:bg-white dark:border-white/10 dark:hover:bg-black/20"
