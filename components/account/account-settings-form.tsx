@@ -21,8 +21,12 @@ export function AccountSettingsForm({
 }) {
   const router = useRouter();
   const [fullName, setFullName] = useState(initialFullName);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -62,6 +66,57 @@ export function AccountSettingsForm({
     await supabase.auth.signOut();
     router.push("/login");
     router.refresh();
+  }
+
+  async function handlePasswordChange(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setChangingPassword(true);
+    setStatus(null);
+
+    try {
+      if (newPassword.length < 6) {
+        throw new Error("Password baru minimal 6 karakter.");
+      }
+
+      if (newPassword !== confirmNewPassword) {
+        throw new Error("Konfirmasi password baru belum cocok.");
+      }
+
+      const supabase = createClient();
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+
+      if (!user?.email) {
+        throw new Error("Sesi login Anda sudah berakhir. Silakan login kembali.");
+      }
+
+      if (currentPassword) {
+        const { error: verifyError } = await supabase.auth.signInWithPassword({
+          email: user.email,
+          password: currentPassword
+        });
+
+        if (verifyError) {
+          throw new Error("Password saat ini tidak cocok.");
+        }
+      }
+
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+      setStatus("Password berhasil diperbarui.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Gagal memperbarui password.");
+    } finally {
+      setChangingPassword(false);
+    }
   }
 
   return (
@@ -112,6 +167,63 @@ export function AccountSettingsForm({
           </button>
         </div>
       </form>
+
+      <div className="mt-8 border-t border-black/5 pt-8 dark:border-white/10">
+        <h3 className="font-display text-2xl">Ganti password</h3>
+        <p className="mt-3 max-w-2xl text-sm text-[rgb(var(--muted))]">
+          Setelah login, Anda bisa mengubah password langsung dari sini. Isi password saat ini untuk verifikasi, lalu
+          masukkan password baru.
+        </p>
+
+        <form onSubmit={handlePasswordChange} className="mt-6 grid gap-4">
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium">Password saat ini</span>
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(event) => setCurrentPassword(event.target.value)}
+              className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3"
+              placeholder="Isi password saat ini"
+            />
+          </label>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium">Password baru</span>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
+                minLength={6}
+                className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3"
+                placeholder="Minimal 6 karakter"
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium">Konfirmasi password baru</span>
+              <input
+                type="password"
+                value={confirmNewPassword}
+                onChange={(event) => setConfirmNewPassword(event.target.value)}
+                minLength={6}
+                className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3"
+                placeholder="Ulangi password baru"
+              />
+            </label>
+          </div>
+
+          <div className="flex flex-col gap-3 pt-2 md:flex-row">
+            <button
+              type="submit"
+              disabled={changingPassword}
+              className="rounded-2xl bg-ink px-5 py-3 text-sm font-medium text-white disabled:opacity-60"
+            >
+              {changingPassword ? "Menyimpan..." : "Update password"}
+            </button>
+          </div>
+        </form>
+      </div>
 
       {status ? <p className="mt-4 text-sm text-coral">{status}</p> : null}
     </article>
