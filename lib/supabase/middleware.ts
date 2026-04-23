@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getDefaultRouteForRole } from "@/lib/auth/redirects";
 import { resolveUserRole } from "@/lib/auth/resolve-role";
 import { protectedRouteGroups } from "@/lib/auth/route-guards";
+import { hasUniversalAccess } from "@/lib/auth/universal-access";
 import type { UserRole } from "@/lib/db/types";
 
 type CookieWrite = {
@@ -52,6 +53,10 @@ export async function updateSession(request: NextRequest) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", request.nextUrl.pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  if (hasUniversalAccess(user.email)) {
+    return response;
   }
 
   const role = await resolveUserRole(supabase, user);

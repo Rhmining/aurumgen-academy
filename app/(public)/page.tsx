@@ -6,8 +6,10 @@ import { IbCard } from "@/components/public/ib-card";
 import { IgcseCard } from "@/components/public/igcse-card";
 import { getDefaultRouteForRole } from "@/lib/auth/redirects";
 import { getCurrentUserRole } from "@/lib/auth/get-current-user-role";
+import { hasUniversalAccess } from "@/lib/auth/universal-access";
 import { publicMetrics } from "@/lib/db/queries";
 import { buildMetadata } from "@/lib/seo";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = buildMetadata({
   description: "AURUMGEN Academy membantu keluarga dan guru menjalankan jalur IGCSE, IB, dan university readiness dengan portal terintegrasi dan AI-RUM.",
@@ -53,8 +55,15 @@ const faqItems = [
 
 export default async function HomePage() {
   const currentRole = await getCurrentUserRole();
+  const supabase = await createClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
 
   if (currentRole) {
+    if (hasUniversalAccess(user?.email)) {
+      redirect("/account");
+    }
     redirect(getDefaultRouteForRole(currentRole));
   }
 

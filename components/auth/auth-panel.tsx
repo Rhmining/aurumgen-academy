@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 import { getDefaultRouteForRole } from "@/lib/auth/redirects";
 import { parseUserRole } from "@/lib/auth/get-user-role";
+import { hasUniversalAccess } from "@/lib/auth/universal-access";
 import type { UserRole } from "@/lib/db/types";
 import { buildAuthCallbackUrl, sanitizeRedirectPath } from "@/lib/site-url";
 
@@ -81,7 +82,9 @@ export function AuthPanel() {
               : role
         );
 
-        router.push(sanitizeRedirectPath(nextTarget, getDefaultRouteForRole(resolvedRole)));
+        const intendedRole = hasUniversalAccess(data.user.email) ? role : resolvedRole;
+
+        router.push(sanitizeRedirectPath(nextTarget, getDefaultRouteForRole(intendedRole)));
         router.refresh();
       }
     } catch (error) {

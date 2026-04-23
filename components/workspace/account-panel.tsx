@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { getDefaultRouteForRole } from "@/lib/auth/redirects";
+import { hasUniversalAccess } from "@/lib/auth/universal-access";
 import type { UserRole } from "@/lib/db/types";
 
 type AccountState = {
   fullName: string | null;
   email: string | null;
   role: UserRole | null;
+  universalAccess: boolean;
 };
 
 function formatRole(role: UserRole | null) {
@@ -24,7 +26,8 @@ export function AccountPanel() {
   const [account, setAccount] = useState<AccountState>({
     fullName: null,
     email: null,
-    role: null
+    role: null,
+    universalAccess: false
   });
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -49,7 +52,8 @@ export function AccountPanel() {
       setAccount({
         fullName: typeof profile?.full_name === "string" ? profile.full_name : null,
         email: user.email ?? null,
-        role: (typeof profile?.role === "string" ? profile.role : user.user_metadata?.role ?? null) as UserRole | null
+        role: (typeof profile?.role === "string" ? profile.role : user.user_metadata?.role ?? null) as UserRole | null,
+        universalAccess: hasUniversalAccess(user.email)
       });
     }
 
@@ -70,7 +74,9 @@ export function AccountPanel() {
       <h2 className="mt-3 font-semibold text-[rgb(var(--foreground))]">
         {account.fullName || account.email || "User aktif"}
       </h2>
-      <p className="mt-1 text-sm text-[rgb(var(--muted))]">{formatRole(account.role)}</p>
+      <p className="mt-1 text-sm text-[rgb(var(--muted))]">
+        {account.universalAccess ? "Universal access" : formatRole(account.role)}
+      </p>
       {account.email ? <p className="mt-1 text-sm text-[rgb(var(--muted))]">{account.email}</p> : null}
 
       <div className="mt-4 grid gap-2">

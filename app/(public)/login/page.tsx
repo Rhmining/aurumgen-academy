@@ -4,7 +4,9 @@ import { redirect } from "next/navigation";
 import { AuthPanel } from "@/components/auth/auth-panel";
 import { getDefaultRouteForRole } from "@/lib/auth/redirects";
 import { getCurrentUserRole } from "@/lib/auth/get-current-user-role";
+import { hasUniversalAccess } from "@/lib/auth/universal-access";
 import { buildMetadata } from "@/lib/seo";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = buildMetadata({
   title: "Login",
@@ -14,8 +16,15 @@ export const metadata: Metadata = buildMetadata({
 
 export default async function LoginPage() {
   const currentRole = await getCurrentUserRole();
+  const supabase = await createClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
 
   if (currentRole) {
+    if (hasUniversalAccess(user?.email)) {
+      redirect("/account");
+    }
     redirect(getDefaultRouteForRole(currentRole));
   }
 

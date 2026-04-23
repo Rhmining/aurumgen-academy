@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getDefaultRouteForRole } from "@/lib/auth/redirects";
 import { getWorkspaceConfig } from "@/lib/account/workspace-links";
 import { parseUserRole } from "@/lib/auth/get-user-role";
+import { hasUniversalAccess } from "@/lib/auth/universal-access";
+import { defaultRouteByRole } from "@/lib/auth/redirects";
 
 export default async function AccountPage() {
   const supabase = await createClient();
@@ -32,6 +34,7 @@ export default async function AccountPage() {
 
   const workspace = getWorkspaceConfig(role);
   const dashboardHref = getDefaultRouteForRole(role);
+  const universalAccess = hasUniversalAccess(user.email);
 
   const { data: recentLogs } = await supabase
     .from("operational_activity_logs")
@@ -71,9 +74,13 @@ export default async function AccountPage() {
               <p className="mt-2 text-lg font-semibold">{user.email ?? "-"}</p>
             </div>
             <div className="rounded-[1.5rem] border border-black/5 p-5 dark:border-white/10">
-              <p className="text-sm text-[rgb(var(--muted))]">Akun dibuat</p>
+              <p className="text-sm text-[rgb(var(--muted))]">{universalAccess ? "Akses" : "Akun dibuat"}</p>
               <p className="mt-2 text-lg font-semibold">
-                {profile?.created_at ? new Date(profile.created_at).toLocaleDateString("id-ID") : "-"}
+                {universalAccess
+                  ? "Semua role aktif"
+                  : profile?.created_at
+                    ? new Date(profile.created_at).toLocaleDateString("id-ID")
+                    : "-"}
               </p>
             </div>
           </div>
@@ -88,10 +95,19 @@ export default async function AccountPage() {
 
           <div className="space-y-6">
             <article className="surface rounded-[2rem] p-6 md:p-8">
-              <p className="eyebrow">{workspace.heading}</p>
-              <h2 className="mt-4 font-display text-3xl">Shortcut yang relevan untuk role Anda</h2>
+              <p className="eyebrow">{universalAccess ? "All workspaces" : workspace.heading}</p>
+              <h2 className="mt-4 font-display text-3xl">
+                {universalAccess ? "Pilih dashboard role yang ingin dibuka" : "Shortcut yang relevan untuk role Anda"}
+              </h2>
               <div className="mt-6 grid gap-3">
-                {workspace.links.map((link) => (
+                {(universalAccess
+                  ? Object.entries(defaultRouteByRole).map(([roleKey, href]) => ({
+                      href,
+                      title: `Masuk sebagai ${roleKey}`,
+                      detail: `Buka dashboard ${roleKey} dengan akun universal access yang sama.`
+                    }))
+                  : workspace.links
+                ).map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}

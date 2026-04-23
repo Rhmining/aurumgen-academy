@@ -7,6 +7,7 @@ import { BrandLogo } from "@/components/public/brand-logo";
 import { createClient } from "@/lib/supabase/browser";
 import { getDefaultRouteForRole } from "@/lib/auth/redirects";
 import { parseUserRole } from "@/lib/auth/get-user-role";
+import { hasUniversalAccess } from "@/lib/auth/universal-access";
 import type { UserRole } from "@/lib/db/types";
 
 const links = [
@@ -51,7 +52,7 @@ export function Navbar() {
       );
 
       setAccountLink({
-        href: getDefaultRouteForRole(role as UserRole),
+        href: hasUniversalAccess(user.email) ? "/account" : getDefaultRouteForRole(role as UserRole),
         label: "Dashboard"
       });
     }
