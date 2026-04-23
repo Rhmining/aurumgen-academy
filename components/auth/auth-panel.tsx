@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 import { getDefaultRouteForRole } from "@/lib/auth/redirects";
@@ -22,11 +22,13 @@ export function AuthPanel() {
   const searchParams = useSearchParams();
   const nextTarget = sanitizeRedirectPath(searchParams.get("next"));
   const errorMessage = searchParams.get("error");
+  const resetSuccess = searchParams.get("reset") === "success";
 
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup" | "recovery">("signin");
   const [role, setRole] = useState<UserRole>("student");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,6 +38,34 @@ export function AuthPanel() {
     [nextTarget, role]
   );
 
+  useEffect(() => {
+    const supabase = createClient();
+
+    function checkRecoveryState() {
+      if (typeof window === "undefined") return;
+      const hash = window.location.hash;
+      if (hash.includes("type=recovery")) {
+        setMode("recovery");
+        setStatus("Masukkan password baru Anda untuk menyelesaikan reset.");
+      }
+    }
+
+    checkRecoveryState();
+
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setMode("recovery");
+        setStatus("Masukkan password baru Anda untuk menyelesaikan reset.");
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSubmitting(true);
@@ -44,7 +74,27 @@ export function AuthPanel() {
     const supabase = createClient();
 
     try {
-      if (mode === "signup") {
+      if (mode === "recovery") {
+        if (password.length < 6) {
+          throw new Error("Password baru minimal 6 karakter.");
+        }
+
+        if (password !== confirmPassword) {
+          throw new Error("Konfirmasi password belum cocok.");
+        }
+
+        const { error } = await supabase.auth.updateUser({
+          password
+        });
+
+        if (error) throw error;
+
+        setStatus("Password baru berhasil disimpan. Silakan login dengan password tersebut.");
+        setPassword("");
+        setConfirmPassword("");
+        setMode("signin");
+        router.replace("/login?reset=success");
+      } else if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -95,23 +145,57 @@ export function AuthPanel() {
     }
   }
 
+  async function handleForgotPassword() {
+    if (!email.trim()) {
+      setStatus("Isi email dulu, lalu klik lupa password lagi.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setStatus(null);
+
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/login`
+      });
+
+      if (error) throw error;
+      setStatus("Email reset password sudah dikirim. Buka inbox Anda lalu klik link yang masuk.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Gagal mengirim email reset password.";
+      setStatus(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <section className="surface rounded-[2rem] p-6 md:p-8">
       <div className="flex flex-wrap gap-3">
         <button
           type="button"
-          onClick={() => setMode("signin")}
+          onClick={() => {
+            setMode("signin");
+            setStatus(null);
+          }}
           className={`rounded-full px-4 py-2 text-sm ${mode === "signin" ? "bg-ink text-white" : "border border-black/10"}`}
         >
           Login
         </button>
         <button
           type="button"
-          onClick={() => setMode("signup")}
+          onClick={() => {
+            setMode("signup");
+            setStatus(null);
+          }}
           className={`rounded-full px-4 py-2 text-sm ${mode === "signup" ? "bg-ink text-white" : "border border-black/10"}`}
         >
           Daftar
         </button>
+        {mode === "recovery" ? (
+          <span className="rounded-full bg-ink px-4 py-2 text-sm text-white">Reset password</span>
+        ) : null}
       </div>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -128,35 +212,41 @@ export function AuthPanel() {
           </label>
         ) : null}
 
-        <label className="block">
-          <span className="mb-2 block text-sm font-medium">Role</span>
-          <select
-            value={role}
-            onChange={(event) => setRole(event.target.value as UserRole)}
-            className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3"
-          >
-            {roleOptions.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        {mode !== "recovery" ? (
+          <>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium">Role</span>
+              <select
+                value={role}
+                onChange={(event) => setRole(event.target.value as UserRole)}
+                className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3"
+              >
+                {roleOptions.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium">Email</span>
+              <input
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+                className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3"
+                placeholder="nama@email.com"
+              />
+            </label>
+          </>
+        ) : null}
 
         <label className="block">
-          <span className="mb-2 block text-sm font-medium">Email</span>
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
-            className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3"
-            placeholder="nama@email.com"
-          />
-        </label>
-
-        <label className="block">
-          <span className="mb-2 block text-sm font-medium">Password</span>
+          <span className="mb-2 block text-sm font-medium">
+            {mode === "recovery" ? "Password baru" : "Password"}
+          </span>
           <input
             type="password"
             value={password}
@@ -168,21 +258,61 @@ export function AuthPanel() {
           />
         </label>
 
+        {mode === "recovery" ? (
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium">Konfirmasi password baru</span>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              required
+              minLength={6}
+              className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3"
+              placeholder="Ulangi password baru"
+            />
+          </label>
+        ) : null}
+
         <button
           type="submit"
           disabled={isSubmitting}
           className="w-full rounded-2xl bg-ink px-5 py-3 text-sm font-medium text-white disabled:opacity-60"
         >
-          {isSubmitting ? "Memproses..." : mode === "signin" ? "Login" : "Buat akun"}
+          {isSubmitting
+            ? "Memproses..."
+            : mode === "signin"
+              ? "Login"
+              : mode === "signup"
+                ? "Buat akun"
+                : "Simpan password baru"}
         </button>
       </form>
 
-      <div className="mt-4 rounded-2xl bg-black/5 px-4 py-3 text-sm dark:bg-white/5">
-        Tujuan setelah login: <span className="font-medium">{destination}</span>
-      </div>
+      {mode !== "recovery" ? (
+        <div className="mt-4 rounded-2xl bg-black/5 px-4 py-3 text-sm dark:bg-white/5">
+          Tujuan setelah login: <span className="font-medium">{destination}</span>
+        </div>
+      ) : (
+        <div className="mt-4 rounded-2xl bg-black/5 px-4 py-3 text-sm dark:bg-white/5">
+          Halaman ini sekarang sedang berada di mode recovery. Setelah password baru tersimpan, Anda bisa login normal lagi.
+        </div>
+      )}
 
-      {status || errorMessage ? (
-        <p className="mt-4 text-sm text-coral">{status ?? "Akses role Anda tidak cocok dengan halaman tujuan."}</p>
+      {mode === "signin" ? (
+        <button
+          type="button"
+          onClick={handleForgotPassword}
+          disabled={isSubmitting}
+          className="mt-4 text-sm font-medium text-[rgb(var(--foreground))] underline-offset-4 hover:underline disabled:opacity-60"
+        >
+          Lupa password?
+        </button>
+      ) : null}
+
+      {status || errorMessage || resetSuccess ? (
+        <p className="mt-4 text-sm text-coral">
+          {status ?? (resetSuccess ? "Password berhasil direset. Silakan login dengan password baru." : "Akses role Anda tidak cocok dengan halaman tujuan.")}
+        </p>
       ) : null}
     </section>
   );
