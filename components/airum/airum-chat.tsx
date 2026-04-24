@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import type { UserRole } from "@/lib/db/types";
+import { readJsonResponse } from "@/lib/api/read-json-response";
 
 type KnowledgeSource = {
   documentId: number;
@@ -24,6 +25,25 @@ type ChatSession = {
   id: string;
   title: string;
   updated_at: string;
+};
+
+type SessionPayload = {
+  items?: ChatSession[];
+  messages?: { id: string; role: "user" | "assistant"; content: string }[];
+  citations?: Array<{
+    message_id: string;
+    document_id: number;
+    chunk_index: number;
+    title: string;
+    category: string;
+    similarity?: number | null;
+    retrieval_method?: "vector" | "keyword" | "hybrid" | null;
+    snippet?: string | null;
+  }>;
+  sessionId?: string;
+  assistantMessageId?: string;
+  outputText?: string;
+  sources?: KnowledgeSource[];
 };
 
 const starterMessages: Record<UserRole, string> = {
@@ -62,8 +82,7 @@ export function AirumChat({ role }: { role: UserRole }) {
   async function loadSessions() {
     try {
       const response = await fetch("/api/ai-rum/sessions", { cache: "no-store" });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error ?? "Gagal memuat session.");
+      const payload = (await readJsonResponse(response)) as SessionPayload;
 
       const items = Array.isArray(payload.items) ? payload.items : [];
       setSessions(items);
@@ -78,11 +97,10 @@ export function AirumChat({ role }: { role: UserRole }) {
 
     try {
       const response = await fetch(`/api/ai-rum/sessions/${sessionId}`, { cache: "no-store" });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error ?? "Gagal memuat detail session.");
+      const payload = (await readJsonResponse(response)) as SessionPayload;
 
       const citationsByMessage = new Map<string, KnowledgeSource[]>();
-      for (const citation of payload.citations ?? []) {
+      for (const citation of Array.isArray(payload.citations) ? payload.citations : []) {
         const bucket = citationsByMessage.get(citation.message_id) ?? [];
         bucket.push({
           documentId: citation.document_id,
@@ -96,7 +114,7 @@ export function AirumChat({ role }: { role: UserRole }) {
         citationsByMessage.set(citation.message_id, bucket);
       }
 
-      const nextMessages = (payload.messages ?? []).map((message: { id: string; role: "user" | "assistant"; content: string }) => ({
+      const nextMessages = (Array.isArray(payload.messages) ? payload.messages : []).map((message) => ({
         id: message.id,
         role: message.role,
         content: message.content,
@@ -131,8 +149,7 @@ export function AirumChat({ role }: { role: UserRole }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: nextTitle })
     });
-    const payload = await response.json();
-    if (!response.ok) throw new Error(payload.error ?? "Gagal rename session.");
+    await readJsonResponse(response);
     await loadSessions();
   }
 
@@ -143,8 +160,7 @@ export function AirumChat({ role }: { role: UserRole }) {
     const response = await fetch(`/api/ai-rum/sessions/${sessionId}`, {
       method: "DELETE"
     });
-    const payload = await response.json();
-    if (!response.ok) throw new Error(payload.error ?? "Gagal menghapus session.");
+    await readJsonResponse(response);
 
     if (activeSessionId === sessionId) {
       setActiveSessionId(null);
@@ -179,19 +195,16 @@ export function AirumChat({ role }: { role: UserRole }) {
         })
       });
 
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.error ?? "AI-RUM sedang tidak tersedia.");
-      }
+      const payload = (await readJsonResponse(response)) as SessionPayload;
 
       const nextSessionId = typeof payload.sessionId === "string" ? payload.sessionId : activeSessionId;
       setActiveSessionId(nextSessionId ?? null);
       setMessages((current) => [
         ...current,
         {
-          id: payload.assistantMessageId,
+          id: typeof payload.assistantMessageId === "string" ? payload.assistantMessageId : undefined,
           role: "assistant",
-          content: payload.outputText ?? "Belum ada jawaban.",
+          content: typeof payload.outputText === "string" ? payload.outputText : "Belum ada jawaban.",
           sources: Array.isArray(payload.sources) ? payload.sources : []
         }
       ]);
