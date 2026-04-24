@@ -93,7 +93,11 @@ export async function POST(request: Request) {
         instructions: `${buildSystemPrompt(role)}${retrievalPrompt}\n\nJika menggunakan knowledge internal, sebutkan secara ringkas bahwa jawaban didukung knowledge base AURUMGEN.`,
         input: messages.map((message) => ({
           role: message.role,
-          content: [{ type: "input_text", text: message.content }]
+          content: [
+            message.role === "assistant"
+              ? { type: "output_text", text: message.content }
+              : { type: "input_text", text: message.content }
+          ]
         }))
       },
       timeoutMs: 45000,
