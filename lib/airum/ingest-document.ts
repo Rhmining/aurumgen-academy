@@ -1,6 +1,31 @@
 import { chunkText } from "@/lib/airum/chunk-text";
 import { createEmbedding, toPgVector } from "@/lib/airum/embeddings";
 
+async function syncIngestionState(
+  supabase: any,
+  input: {
+    documentId: number;
+    ingestionStatus: "processing" | "failed" | "processed";
+    status?: "draft" | "queued" | "processed" | "published";
+    chunkCount?: number;
+    lastIngestedAt?: string;
+  }
+) {
+  const { data, error } = await supabase.rpc("set_ai_document_ingestion_state", {
+    target_document_id: input.documentId,
+    next_ingestion_status: input.ingestionStatus,
+    next_status: input.status ?? null,
+    next_chunk_count: typeof input.chunkCount === "number" ? input.chunkCount : null,
+    next_last_ingested_at: input.lastIngestedAt ?? null
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { data };
+}
+
 export async function ingestAiDocument(
   supabase: any,
   document: {
@@ -8,10 +33,14 @@ export async function ingestAiDocument(
     content: string;
   }
 ) {
-  await supabase
-    .from("ai_documents")
-    .update({ ingestion_status: "processing" })
-    .eq("id", document.id);
+  const processingSync = await syncIngestionState(supabase, {
+    documentId: document.id,
+    ingestionStatus: "processing"
+  });
+
+  if (processingSync.error) {
+    return { error: processingSync.error };
+  }
 
   const chunks = chunkText(document.content ?? "");
 
@@ -21,10 +50,10 @@ export async function ingestAiDocument(
     .eq("document_id", document.id);
 
   if (deleteError) {
-    await supabase
-      .from("ai_documents")
-      .update({ ingestion_status: "failed" })
-      .eq("id", document.id);
+    await syncIngestionState(supabase, {
+      documentId: document.id,
+      ingestionStatus: "failed"
+    });
 
     return { error: deleteError.message };
   }
@@ -55,27 +84,25 @@ export async function ingestAiDocument(
       .insert(chunkPayload);
 
     if (insertError) {
-      await supabase
-        .from("ai_documents")
-        .update({ ingestion_status: "failed" })
-        .eq("id", document.id);
+      await syncIngestionState(supabase, {
+        documentId: document.id,
+        ingestionStatus: "failed"
+      });
 
       return { error: insertError.message };
     }
   }
 
-  const { error: updateError } = await supabase
-    .from("ai_documents")
-    .update({
-      chunk_count: chunks.length,
-      ingestion_status: "processed",
-      status: "processed",
-      last_ingested_at: new Date().toISOString()
-    })
-    .eq("id", document.id);
+  const finalizedSync = await syncIngestionState(supabase, {
+    documentId: document.id,
+    chunkCount: chunks.length,
+    ingestionStatus: "processed",
+    status: "processed",
+    lastIngestedAt: new Date().toISOString()
+  });
 
-  if (updateError) {
-    return { error: updateError.message };
+  if (finalizedSync.error) {
+    return { error: finalizedSync.error };
   }
 
   return { chunkCount: chunks.length };
