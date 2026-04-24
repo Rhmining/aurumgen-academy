@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireSupabaseUser } from "@/lib/api/route-helpers";
+import { applyOwnerScope, requireSupabaseUser } from "@/lib/api/route-helpers";
 import { ingestAiDocument } from "@/lib/airum/ingest-document";
 import { logOperationalEvent } from "@/lib/audit/log-operational-event";
 
@@ -10,16 +10,20 @@ export async function POST(
   const session = await requireSupabaseUser();
   if ("error" in session) return session.error;
 
-  const { supabase, user } = session;
+  const { supabase, user, isSuperAccount } = session;
   const { id } = await params;
   const documentId = Number(id);
 
-  const { data: document, error: readError } = await supabase
-    .from("ai_documents")
-    .select("*")
-    .eq("id", documentId)
-    .eq("owner_id", user.id)
-    .single();
+  const documentQuery = applyOwnerScope(
+    supabase
+      .from("ai_documents")
+      .select("*")
+      .eq("id", documentId),
+    user.id,
+    isSuperAccount
+  );
+
+  const { data: document, error: readError } = await documentQuery.single();
 
   if (readError || !document) {
     return NextResponse.json({ error: readError?.message ?? "Dokumen tidak ditemukan." }, { status: 404 });

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireSupabaseUser } from "@/lib/api/route-helpers";
+import { applyOwnerScope, requireSupabaseUser } from "@/lib/api/route-helpers";
 import { refreshDocumentChunkEmbeddings } from "@/lib/airum/document-chunks";
 
 export async function POST(
@@ -9,7 +9,7 @@ export async function POST(
   const session = await requireSupabaseUser();
   if ("error" in session) return session.error;
 
-  const { supabase, user } = session;
+  const { supabase, user, isSuperAccount } = session;
   const { id } = await params;
   const documentId = Number(id);
 
@@ -17,12 +17,16 @@ export async function POST(
     return NextResponse.json({ error: "Document id tidak valid." }, { status: 400 });
   }
 
-  const { data: document, error: documentError } = await supabase
-    .from("ai_documents")
-    .select("id")
-    .eq("id", documentId)
-    .eq("owner_id", user.id)
-    .single();
+  const documentQuery = applyOwnerScope(
+    supabase
+      .from("ai_documents")
+      .select("id")
+      .eq("id", documentId),
+    user.id,
+    isSuperAccount
+  );
+
+  const { data: document, error: documentError } = await documentQuery.single();
 
   if (documentError || !document) {
     return NextResponse.json(

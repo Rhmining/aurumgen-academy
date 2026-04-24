@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireSupabaseUser } from "@/lib/api/route-helpers";
+import { applyOwnerScope, requireSupabaseUser } from "@/lib/api/route-helpers";
 import { enforceRateLimit } from "@/lib/api/rate-limit";
 import { ingestAiDocument } from "@/lib/airum/ingest-document";
 import { logOperationalEvent } from "@/lib/audit/log-operational-event";
@@ -26,13 +26,18 @@ export async function GET() {
   const session = await requireSupabaseUser();
   if ("error" in session) return session.error;
 
-  const { supabase, user } = session;
-  const { data, error } = await supabase
-    .from("ai_documents")
-    .select("id, title, category, status, ingestion_status, extraction_status, extraction_method, extraction_note, storage_path, chunk_count, reviewed_at, last_ingested_at, created_at, owner_id, content")
-    .eq("owner_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(200);
+  const { supabase, user, isSuperAccount } = session;
+  const docsQuery = applyOwnerScope(
+    supabase
+      .from("ai_documents")
+      .select("id, title, category, status, ingestion_status, extraction_status, extraction_method, extraction_note, storage_path, chunk_count, reviewed_at, last_ingested_at, created_at, owner_id, content")
+      .order("created_at", { ascending: false })
+      .limit(200),
+    user.id,
+    isSuperAccount
+  );
+
+  const { data, error } = await docsQuery;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
@@ -93,7 +98,7 @@ export async function POST(request: Request) {
   const session = await requireSupabaseUser();
   if ("error" in session) return session.error;
 
-  const { supabase, user } = session;
+  const { supabase, user, isSuperAccount } = session;
   const body = await request.json().catch(() => ({}));
   const action = String(body.action ?? "ingest_document");
   const documentId = Number(body.documentId);
@@ -111,12 +116,17 @@ export async function POST(request: Request) {
   }
 
   if (action === "ingest_pending") {
-    const { data, error } = await supabase
-      .from("ai_documents")
-      .select("id, content")
-      .eq("owner_id", user.id)
-      .or("ingestion_status.eq.failed,ingestion_status.eq.queued,chunk_count.eq.0")
-      .limit(20);
+    const pendingQuery = applyOwnerScope(
+      supabase
+        .from("ai_documents")
+        .select("id, content")
+        .or("ingestion_status.eq.failed,ingestion_status.eq.queued,chunk_count.eq.0")
+        .limit(20),
+      user.id,
+      isSuperAccount
+    );
+
+    const { data, error } = await pendingQuery;
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
@@ -159,12 +169,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "documentId tidak valid." }, { status: 400 });
   }
 
-  const { data: document, error: readError } = await supabase
-    .from("ai_documents")
-    .select("id, content")
-    .eq("id", documentId)
-    .eq("owner_id", user.id)
-    .single();
+  const documentQuery = applyOwnerScope(
+    supabase
+      .from("ai_documents")
+      .select("id, content")
+      .eq("id", documentId),
+    user.id,
+    isSuperAccount
+  );
+
+  const { data: document, error: readError } = await documentQuery.single();
 
   if (readError || !document) {
     return NextResponse.json({ error: readError?.message ?? "Dokumen tidak ditemukan." }, { status: 404 });

@@ -18,5 +18,8 @@ export async function logOperationalEvent(
 
   if (error) {
     console.error("Failed to write operational activity log:", error.message);
+    return { ok: false as const, error };
   }
+
+  return { ok: true as const };
 }

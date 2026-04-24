@@ -41,6 +41,8 @@ Urutan file migration yang perlu dijalankan di SQL Editor atau Supabase CLI:
 18. [018_airum_evaluator_metadata.sql](/Users/rachmathidayat/Documents/AURUMGEN%20ACADEMY/supabase/migrations/018_airum_evaluator_metadata.sql)
 19. [019_ai_document_extraction_status.sql](/Users/rachmathidayat/Documents/AURUMGEN%20ACADEMY/supabase/migrations/019_ai_document_extraction_status.sql)
 20. [020_operational_activity_logs.sql](/Users/rachmathidayat/Documents/AURUMGEN%20ACADEMY/supabase/migrations/020_operational_activity_logs.sql)
+21. [021_ai_documents_super_access.sql](/Users/rachmathidayat/Documents/AURUMGEN%20ACADEMY/supabase/migrations/021_ai_documents_super_access.sql)
+22. [022_repair_auth_profile_and_ai_policies.sql](/Users/rachmathidayat/Documents/AURUMGEN%20ACADEMY/supabase/migrations/022_repair_auth_profile_and_ai_policies.sql)
 
 ## 3. Konfigurasi Auth
 

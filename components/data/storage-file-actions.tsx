@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { readJsonResponse } from "@/lib/api/read-json-response";
 
 type StorageFileActionsProps = {
   bucket: string;
@@ -26,12 +27,9 @@ export function StorageFileActions({
       const response = await fetch(
         `/api/storage-link?bucket=${encodeURIComponent(bucket)}&path=${encodeURIComponent(safePath)}&download=${download ? "1" : "0"}`
       );
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.error ?? "Gagal membuat signed URL.");
-      }
+      const payload = await readJsonResponse(response);
 
-      window.open(payload.signedUrl, "_blank", "noopener,noreferrer");
+      window.open(String(payload.signedUrl ?? ""), "_blank", "noopener,noreferrer");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Aksi file gagal.");
     }

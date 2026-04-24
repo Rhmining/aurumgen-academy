@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireSupabaseUser } from "@/lib/api/route-helpers";
+import { applyOwnerScope, requireSupabaseUser } from "@/lib/api/route-helpers";
 import { logOperationalEvent } from "@/lib/audit/log-operational-event";
 
 export async function GET() {
@@ -45,7 +45,7 @@ export async function PATCH(request: Request) {
   const session = await requireSupabaseUser();
   if ("error" in session) return session.error;
 
-  const { supabase, user } = session;
+  const { supabase, user, isSuperAccount } = session;
   const body = await request.json();
   const documentId = Number(body.documentId);
   const action = String(body.action ?? "");
@@ -58,14 +58,19 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Action review tidak dikenali." }, { status: 400 });
   }
 
-  const { data, error } = await supabase
-    .from("ai_documents")
-    .update({
-      reviewed_at: new Date().toISOString(),
-      reviewed_by: user.id
-    })
-    .eq("id", documentId)
-    .eq("owner_id", user.id)
+  const reviewQuery = applyOwnerScope(
+    supabase
+      .from("ai_documents")
+      .update({
+        reviewed_at: new Date().toISOString(),
+        reviewed_by: user.id
+      })
+      .eq("id", documentId),
+    user.id,
+    isSuperAccount
+  );
+
+  const { data, error } = await reviewQuery
     .select("id, reviewed_at")
     .single();
 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireSupabaseUser } from "@/lib/api/route-helpers";
+import { applyOwnerScope, requireSupabaseUser } from "@/lib/api/route-helpers";
 import { createEmbedding, toPgVector } from "@/lib/airum/embeddings";
 import { estimateTokens } from "@/lib/airum/chunk-text";
 import { syncDocumentContentFromChunks } from "@/lib/airum/document-chunks";
@@ -12,7 +12,7 @@ export async function PATCH(
   const session = await requireSupabaseUser();
   if ("error" in session) return session.error;
 
-  const { supabase, user } = session;
+  const { supabase, user, isSuperAccount } = session;
   const body = await request.json().catch(() => ({}));
   const { id, chunkId } = await params;
   const documentId = Number(id);
@@ -23,12 +23,16 @@ export async function PATCH(
     return NextResponse.json({ error: "Document atau chunk id tidak valid." }, { status: 400 });
   }
 
-  const { data: document, error: documentError } = await supabase
-    .from("ai_documents")
-    .select("id")
-    .eq("id", documentId)
-    .eq("owner_id", user.id)
-    .single();
+  const documentQuery = applyOwnerScope(
+    supabase
+      .from("ai_documents")
+      .select("id")
+      .eq("id", documentId),
+    user.id,
+    isSuperAccount
+  );
+
+  const { data: document, error: documentError } = await documentQuery.single();
 
   if (documentError || !document) {
     return NextResponse.json(

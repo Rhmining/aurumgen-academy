@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { readJsonResponse } from "@/lib/api/read-json-response";
 
 export function IngestDocumentButton({
   documentId,
@@ -18,10 +19,7 @@ export function IngestDocumentButton({
       const response = await fetch(`/api/ai-documents/${documentId}/ingest`, {
         method: "POST"
       });
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.error ?? "Ingestion gagal.");
-      }
+      const payload = await readJsonResponse(response);
 
       await onDone(`Ingestion selesai: ${payload.chunkCount} chunk dibuat.`);
     } catch (error) {

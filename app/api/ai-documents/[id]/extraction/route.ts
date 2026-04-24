@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireSupabaseUser } from "@/lib/api/route-helpers";
+import { applyOwnerScope, requireSupabaseUser } from "@/lib/api/route-helpers";
 import { logOperationalEvent } from "@/lib/audit/log-operational-event";
 
 export async function PATCH(
@@ -9,7 +9,7 @@ export async function PATCH(
   const session = await requireSupabaseUser();
   if ("error" in session) return session.error;
 
-  const { supabase, user } = session;
+  const { supabase, user, isSuperAccount } = session;
   const body = await request.json().catch(() => ({}));
   const { id } = await params;
   const documentId = Number(id);
@@ -25,15 +25,20 @@ export async function PATCH(
 
   const note = String(body.note ?? "").trim();
 
-  const { data, error } = await supabase
-    .from("ai_documents")
-    .update({
-      extraction_status: "manual_content",
-      extraction_method: "manual_fallback",
-      extraction_note: note || "Parser gagal, dokumen dialihkan ke fallback manual."
-    })
-    .eq("id", documentId)
-    .eq("owner_id", user.id)
+  const updateQuery = applyOwnerScope(
+    supabase
+      .from("ai_documents")
+      .update({
+        extraction_status: "manual_content",
+        extraction_method: "manual_fallback",
+        extraction_note: note || "Parser gagal, dokumen dialihkan ke fallback manual."
+      })
+      .eq("id", documentId),
+    user.id,
+    isSuperAccount
+  );
+
+  const { data, error } = await updateQuery
     .select("id, extraction_status, extraction_method, extraction_note")
     .single();
 

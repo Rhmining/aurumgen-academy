@@ -41,12 +41,47 @@ export function StorageUploadPanel({
         body: formData
       });
 
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.error ?? "Upload gagal.");
+      const responseText = await response.text();
+      let payload: Record<string, unknown> | null = null;
+
+      try {
+        payload = responseText ? JSON.parse(responseText) : null;
+      } catch {
+        payload = null;
       }
 
-      onUploaded(payload);
+      if (!response.ok) {
+        if (payload?.error && typeof payload.error === "string") {
+          throw new Error(payload.error);
+        }
+
+        if (responseText.includes("<!DOCTYPE")) {
+          throw new Error("Server mengembalikan halaman error HTML. Coba refresh lalu upload ulang.");
+        }
+
+        throw new Error("Upload gagal.");
+      }
+
+      if (!payload) {
+        throw new Error("Respons upload tidak valid.");
+      }
+
+      onUploaded({
+        storagePath: String(payload.storagePath ?? ""),
+        fileName: String(payload.fileName ?? file.name),
+        mimeType: String(payload.mimeType ?? (file.type || "application/octet-stream")),
+        fileSize: Number(payload.fileSize ?? file.size),
+        extractedText: typeof payload.extractedText === "string" ? payload.extractedText : null,
+        extractionSupported: Boolean(payload.extractionSupported),
+        extractionStatus:
+          payload.extractionStatus === "parser_succeeded" ||
+          payload.extractionStatus === "parser_failed" ||
+          payload.extractionStatus === "manual_content"
+            ? payload.extractionStatus
+            : undefined,
+        extractionMethod: typeof payload.extractionMethod === "string" ? payload.extractionMethod : null,
+        extractionNote: typeof payload.extractionNote === "string" ? payload.extractionNote : null
+      });
       setStatus(
         payload.extractionNote
           ? `File ${payload.fileName} berhasil diunggah. ${payload.extractionNote}`

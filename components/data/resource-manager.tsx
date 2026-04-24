@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, ReactNode, useEffect, useState } from "react";
+import { readJsonResponse } from "@/lib/api/read-json-response";
 
 type FieldConfig = {
   name: string;
@@ -50,11 +51,8 @@ export function ResourceManager<T extends Record<string, unknown>>({
     setStatus(null);
     try {
       const response = await fetch(endpoint, { cache: "no-store" });
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.error ?? "Gagal mengambil data.");
-      }
-      setItems(payload.items ?? []);
+      const payload = await readJsonResponse(response);
+      setItems(Array.isArray(payload.items) ? (payload.items as T[]) : []);
     } catch (loadError) {
       setStatus(loadError instanceof Error ? loadError.message : "Gagal mengambil data.");
     } finally {
@@ -83,10 +81,7 @@ export function ResourceManager<T extends Record<string, unknown>>({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form)
       });
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.error ?? "Penyimpanan data gagal.");
-      }
+      await readJsonResponse(response);
 
       setForm(initialForm ?? {});
       setEditingId(null);
@@ -101,10 +96,7 @@ export function ResourceManager<T extends Record<string, unknown>>({
     setStatus(null);
     try {
       const response = await fetch(`${endpoint}/${id}`, { method: "DELETE" });
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.error ?? "Gagal menghapus data.");
-      }
+      await readJsonResponse(response);
 
       await loadItems();
       setStatus("Data berhasil dihapus.");

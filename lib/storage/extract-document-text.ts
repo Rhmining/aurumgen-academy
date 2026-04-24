@@ -1,6 +1,3 @@
-import mammoth from "mammoth";
-import { PDFParse } from "pdf-parse";
-
 type ExtractionResult = {
   text: string | null;
   supported: boolean;
@@ -90,6 +87,7 @@ export async function extractDocumentText(file: File): Promise<ExtractionResult>
 
   if (lowerName.endsWith(".docx")) {
     try {
+      const mammoth = await import("mammoth");
       const buffer = Buffer.from(await file.arrayBuffer());
       const result = await mammoth.extractRawText({ buffer });
       const text = normalizeExtractedText(result.value);
@@ -115,9 +113,15 @@ export async function extractDocumentText(file: File): Promise<ExtractionResult>
   }
 
   if (lowerName.endsWith(".pdf")) {
-    let parser: PDFParse | null = null;
+    let parser:
+      | {
+          getText: () => Promise<{ text: string }>;
+          destroy: () => Promise<void>;
+        }
+      | null = null;
 
     try {
+      const { PDFParse } = await import("pdf-parse");
       const buffer = Buffer.from(await file.arrayBuffer());
       parser = new PDFParse({ data: buffer });
       const result = await parser.getText();
@@ -136,7 +140,10 @@ export async function extractDocumentText(file: File): Promise<ExtractionResult>
         supported: true,
         method: "pdf",
         status: "parser_failed",
-        note: error instanceof Error ? error.message : "Parser PDF gagal."
+        note:
+          error instanceof Error
+            ? `Parser PDF gagal: ${error.message}`
+            : "Parser PDF gagal."
       };
     } finally {
       await parser?.destroy().catch(() => undefined);

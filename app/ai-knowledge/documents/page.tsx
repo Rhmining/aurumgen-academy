@@ -8,6 +8,14 @@ import { IngestDocumentButton } from "@/components/data/ingest-document-button";
 import { DocumentDetailLink } from "@/components/data/document-detail-link";
 import type { AiDocumentRecord } from "@/lib/db/types";
 
+function inferTitleFromFileName(fileName: string) {
+  return fileName
+    .replace(/\.[^/.]+$/, "")
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export default function AiKnowledgeDocumentsPage() {
   return (
     <AiKnowledgeShell title="Documents" description="Kelola dokumen sumber, kategori, dan status kesiapan retrieval.">
@@ -43,9 +51,15 @@ export default function AiKnowledgeDocumentsPage() {
                 setField("file_name", result.fileName);
                 setField("mime_type", result.mimeType);
                 setField("file_size", String(result.fileSize));
+                setField("category", "knowledge");
                 setField("source_type", "upload");
+                if (!form.title?.trim()) {
+                  setField("title", inferTitleFromFileName(result.fileName));
+                }
                 if (result.extractedText) {
                   setField("content", result.extractedText);
+                  setField("ingestion_status", "queued");
+                  setField("status", "queued");
                 }
                 if (result.extractionStatus) {
                   setField("extraction_status", result.extractionStatus);
@@ -54,6 +68,10 @@ export default function AiKnowledgeDocumentsPage() {
                   setField("extraction_method", result.extractionMethod);
                 }
                 setField("extraction_note", result.extractionNote ?? "");
+                if (!result.extractedText) {
+                  setField("ingestion_status", "idle");
+                  setField("status", "draft");
+                }
               }}
             />
             {form.storage_path ? (
