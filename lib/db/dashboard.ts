@@ -103,9 +103,12 @@ export const getTeacherDashboardData = cache(async (): Promise<TeacherDashboardD
     privateMaterialsCount,
     questionBankCount,
     questionBankMissingKeyCount,
+    progressSnapshotsCount,
+    trackedStudentsCount,
     recentActivityCount,
     latestMaterials,
-    latestQuestionSets
+    latestQuestionSets,
+    latestProgressSnapshots
   ] = await Promise.all([
     supabase.from("materials").select("*", { count: "exact", head: true }).eq("owner_id", user.id),
     supabase
@@ -124,6 +127,11 @@ export const getTeacherDashboardData = cache(async (): Promise<TeacherDashboardD
       .select("*", { count: "exact", head: true })
       .eq("owner_id", user.id)
       .is("answer_key", null),
+    supabase.from("progress_snapshots").select("*", { count: "exact", head: true }).eq("owner_id", user.id),
+    supabase
+      .from("progress_snapshots")
+      .select("profile_id", { count: "exact", head: true })
+      .eq("owner_id", user.id),
     supabase
       .from("operational_activity_logs")
       .select("*", { count: "exact", head: true })
@@ -138,6 +146,12 @@ export const getTeacherDashboardData = cache(async (): Promise<TeacherDashboardD
     supabase
       .from("question_bank")
       .select("id, subject, pathway, difficulty, created_at")
+      .eq("owner_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(3),
+    supabase
+      .from("progress_snapshots")
+      .select("id, profile_id, subject, score, created_at")
       .eq("owner_id", user.id)
       .order("created_at", { ascending: false })
       .limit(3)
@@ -158,6 +172,11 @@ export const getTeacherDashboardData = cache(async (): Promise<TeacherDashboardD
       label: "Question bank",
       value: formatCount(questionBankCount.count),
       detail: `${formatCount(questionBankMissingKeyCount.count)} item belum punya answer key`
+    },
+    {
+      label: "Progress snapshots",
+      value: formatCount(progressSnapshotsCount.count),
+      detail: `${formatCount(trackedStudentsCount.count)} siswa sudah punya jejak progres`
     },
     {
       label: "Aktivitas 7 hari",
@@ -191,14 +210,14 @@ export const getTeacherDashboardData = cache(async (): Promise<TeacherDashboardD
     },
     {
       title:
-        (recentActivityCount.count ?? 0) > 0
-          ? "Cek alur kerja yang baru Anda ubah"
-          : "Mulai aktivitas teacher pertama Anda",
+        (progressSnapshotsCount.count ?? 0) > 0
+          ? `Review ${progressSnapshotsCount.count} progress snapshot terbaru`
+          : "Isi progress snapshot pertama untuk siswa",
       detail:
-        (recentActivityCount.count ?? 0) > 0
-          ? `Ada ${recentActivityCount.count} aktivitas tercatat dalam 7 hari terakhir.`
-          : "Upload materi atau buat set soal agar workspace mulai terisi data nyata.",
-      href: "/teacher/upload-flow"
+        (progressSnapshotsCount.count ?? 0) > 0
+          ? "Gunakan tracker progress untuk menjaga portal student dan parent tetap relevan."
+          : "Setelah materi dan soal siap, isi satu snapshot skor agar dashboard siswa langsung punya sinyal nyata.",
+      href: "/teacher/progress"
     }
   ];
 
@@ -214,9 +233,9 @@ export const getTeacherDashboardData = cache(async (): Promise<TeacherDashboardD
       note: "Berdasarkan item tanpa answer key."
     },
     {
-      stage: "Aktivitas terbaru",
-      count: `${formatCount(recentActivityCount.count)} log`,
-      note: "Membantu baca ritme kerja teacher dalam 7 hari terakhir."
+      stage: "Progress snapshot aktif",
+      count: `${formatCount(progressSnapshotsCount.count)} item`,
+      note: "Dipakai langsung oleh portal progress untuk student dan parent."
     }
   ];
 
@@ -232,6 +251,12 @@ export const getTeacherDashboardData = cache(async (): Promise<TeacherDashboardD
       detail: `${item.pathway ?? "-"} • dibuat ${hoursAgo(item.created_at) ?? "baru"}`,
       href: "/teacher/question-bank",
       badge: "Question"
+    })),
+    ...(latestProgressSnapshots.data ?? []).map((item) => ({
+      title: `${item.subject ?? "General"} • skor ${item.score ?? "-"}`,
+      detail: `${item.profile_id} • ${hoursAgo(item.created_at) ?? "baru"}`,
+      href: "/teacher/progress",
+      badge: "Progress"
     }))
   ].slice(0, 4);
 

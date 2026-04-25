@@ -115,9 +115,9 @@ export default async function TeacherDashboardPage() {
                 detail: "Pastikan set soal punya pathway, level, dan answer key yang benar."
               },
               {
-                href: "/teacher/upload-flow",
-                title: "Cek upload flow",
-                detail: "Verifikasi file upload dan sinkronisasi storage sebelum kelas dimulai."
+                href: "/teacher/progress",
+                title: "Isi progress snapshot",
+                detail: "Catat skor dan note singkat supaya student dan parent portal punya sinyal progres terbaru."
               }
             ].map((action) => (
               <Link
