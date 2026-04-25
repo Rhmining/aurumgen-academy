@@ -9,6 +9,12 @@ export default async function ParentPortalPage() {
     <PortalShell
       title="Parent Portal"
       description="Ringkasan progres keluarga yang lebih mudah dibaca, ditindaklanjuti, dan disinkronkan dengan teacher workflow."
+      sections={[
+        { href: "/portal/parent", label: "Overview" },
+        { href: "/portal/materials", label: "Materials" },
+        { href: "/portal/curriculum", label: "Curriculum" },
+        { href: "/portal/progress", label: "Progress" }
+      ]}
     >
       <section className="grid gap-4 md:grid-cols-3">
         {data.metrics.map((metric) => (

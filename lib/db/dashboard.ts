@@ -1,5 +1,7 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { resolveUserRole } from "@/lib/auth/resolve-role";
+import type { UserRole } from "@/lib/db/types";
 
 type TeacherDashboardData = {
   metrics: Array<{ label: string; value: string; detail: string }>;
@@ -19,6 +21,29 @@ type ParentDashboardData = {
   metrics: Array<{ label: string; value: string; detail: string }>;
   highlights: Array<{ title: string; body: string; href: string }>;
   recentSignals: Array<{ title: string; detail: string }>;
+};
+
+type PortalMaterialsData = {
+  role: UserRole;
+  featured: Array<{ title: string; detail: string }>;
+  bySubject: Array<{ label: string; value: string; detail: string }>;
+};
+
+type PortalProgressData = {
+  role: UserRole;
+  metrics: Array<{ label: string; value: string; detail: string }>;
+  timeline: Array<{ title: string; detail: string }>;
+};
+
+type PortalCurriculumData = {
+  role: UserRole;
+  items: Array<{ title: string; detail: string }>;
+  summary: Array<{ label: string; value: string; detail: string }>;
+};
+
+type TeacherStudentsData = {
+  metrics: Array<{ label: string; value: string; detail: string }>;
+  signals: Array<{ student: string; subject: string; status: string; trend: string; detail: string }>;
 };
 
 type AiKnowledgeDashboardData = {
@@ -56,6 +81,12 @@ async function getAuthedSupabase() {
   } = await supabase.auth.getUser();
 
   return { supabase, user };
+}
+
+async function getAuthedRole() {
+  const { supabase, user } = await getAuthedSupabase();
+  const role = await resolveUserRole(supabase, user);
+  return { supabase, user, role };
 }
 
 export const getTeacherDashboardData = cache(async (): Promise<TeacherDashboardData> => {
@@ -402,6 +433,257 @@ export const getParentDashboardData = cache(async (): Promise<ParentDashboardDat
   ].slice(0, 4);
 
   return { metrics, highlights, recentSignals };
+});
+
+export const getPortalMaterialsData = cache(async (): Promise<PortalMaterialsData> => {
+  const { supabase, user, role } = await getAuthedRole();
+  if (!user) {
+    return { role, featured: [], bySubject: [] };
+  }
+
+  const { data: materials } = await supabase
+    .from("materials")
+    .select("title, subject, pathway, visibility, description, created_at")
+    .in("visibility", ["portal", "published"])
+    .order("created_at", { ascending: false })
+    .limit(12);
+
+  const featured = (materials ?? []).slice(0, 6).map((item) => ({
+    title: item.title,
+    detail: [item.subject, item.pathway ?? "-", item.visibility, hoursAgo(item.created_at) ?? "baru"]
+      .filter(Boolean)
+      .join(" • ")
+  }));
+
+  const bySubjectMap = new Map<string, number>();
+  for (const item of materials ?? []) {
+    bySubjectMap.set(item.subject, (bySubjectMap.get(item.subject) ?? 0) + 1);
+  }
+
+  const bySubject = Array.from(bySubjectMap.entries())
+    .sort((left, right) => right[1] - left[1])
+    .slice(0, 4)
+    .map(([label, value]) => ({
+      label,
+      value: String(value),
+      detail: "Materi portal/published yang siap dibaca."
+    }));
+
+  return { role, featured, bySubject };
+});
+
+export const getPortalProgressData = cache(async (): Promise<PortalProgressData> => {
+  const { supabase, user, role } = await getAuthedRole();
+  if (!user) {
+    return { role, metrics: [], timeline: [] };
+  }
+
+  const lastMonthIso = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const [snapshots, sessions, logs] = await Promise.all([
+    supabase
+      .from("progress_snapshots")
+      .select("score, created_at")
+      .eq("profile_id", user.id)
+      .gte("created_at", lastMonthIso)
+      .order("created_at", { ascending: false })
+      .limit(8),
+    supabase
+      .from("airum_sessions")
+      .select("title, updated_at")
+      .eq("owner_id", user.id)
+      .order("updated_at", { ascending: false })
+      .limit(3),
+    supabase
+      .from("operational_activity_logs")
+      .select("action, entity_type, created_at")
+      .eq("actor_id", user.id)
+      .gte("created_at", lastMonthIso)
+      .order("created_at", { ascending: false })
+      .limit(5)
+  ]);
+
+  const scores = (snapshots.data ?? [])
+    .map((item) => Number(item.score))
+    .filter((value) => Number.isFinite(value));
+  const latestScore = scores[0] ?? null;
+  const averageScore = scores.length
+    ? Math.round(scores.reduce((sum, value) => sum + value, 0) / scores.length)
+    : null;
+
+  const metrics = [
+    {
+      label: "Snapshot progres",
+      value: formatCount(scores.length),
+      detail: "Diambil dari progress_snapshots 30 hari terakhir."
+    },
+    {
+      label: "Skor terbaru",
+      value: latestScore !== null ? String(Math.round(latestScore)) : "-",
+      detail: "Nilai snapshot terbaru untuk akun ini."
+    },
+    {
+      label: "Rata-rata 30 hari",
+      value: averageScore !== null ? String(averageScore) : "-",
+      detail: "Membantu melihat kestabilan progres."
+    },
+    {
+      label: "Sesi AI-RUM aktif",
+      value: formatCount(sessions.data?.length ?? 0),
+      detail: "Percakapan belajar yang bisa dilanjutkan."
+    }
+  ];
+
+  const timeline = [
+    ...(snapshots.data ?? []).map((item) => ({
+      title: `Snapshot skor ${item.score ?? "-"}`,
+      detail: `${hoursAgo(item.created_at) ?? "baru"} • progress_snapshots`
+    })),
+    ...(sessions.data ?? []).map((item) => ({
+      title: item.title || "Sesi AI-RUM",
+      detail: `${hoursAgo(item.updated_at) ?? "baru"} • AI-RUM`
+    })),
+    ...(logs.data ?? []).map((item) => ({
+      title: item.action,
+      detail: `${item.entity_type} • ${hoursAgo(item.created_at) ?? "baru"}`
+    }))
+  ].slice(0, 6);
+
+  return { role, metrics, timeline };
+});
+
+export const getPortalCurriculumData = cache(async (): Promise<PortalCurriculumData> => {
+  const { supabase, user, role } = await getAuthedRole();
+  if (!user) {
+    return { role, items: [], summary: [] };
+  }
+
+  const [curriculumItems, materials] = await Promise.all([
+    supabase
+      .from("curriculum_items")
+      .select("title, pathway, subject, created_at")
+      .order("created_at", { ascending: false })
+      .limit(8),
+    supabase
+      .from("materials")
+      .select("subject, pathway")
+      .in("visibility", ["portal", "published"])
+      .limit(50)
+  ]);
+
+  const items = (curriculumItems.data ?? []).map((item) => ({
+    title: item.title,
+    detail: `${item.subject} • ${item.pathway} • ${hoursAgo(item.created_at) ?? "baru"}`
+  }));
+
+  const pathwayMap = new Map<string, number>();
+  for (const item of materials.data ?? []) {
+    const key = item.pathway ?? "General";
+    pathwayMap.set(key, (pathwayMap.get(key) ?? 0) + 1);
+  }
+
+  const summary = Array.from(pathwayMap.entries())
+    .sort((left, right) => right[1] - left[1])
+    .slice(0, 4)
+    .map(([label, value]) => ({
+      label,
+      value: String(value),
+      detail: "Jumlah materi yang mendukung pathway ini."
+    }));
+
+  return { role, items, summary };
+});
+
+export const getTeacherStudentsData = cache(async (): Promise<TeacherStudentsData> => {
+  const { supabase, user } = await getAuthedSupabase();
+  if (!user) {
+    return { metrics: [], signals: [] };
+  }
+
+  const [{ data: students }, { data: snapshots }, { data: sessions }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, full_name")
+      .eq("role", "student")
+      .order("created_at", { ascending: false })
+      .limit(6),
+    supabase
+      .from("progress_snapshots")
+      .select("profile_id, score, created_at")
+      .order("created_at", { ascending: false })
+      .limit(30),
+    supabase
+      .from("airum_sessions")
+      .select("owner_id, updated_at")
+      .eq("role", "student")
+      .order("updated_at", { ascending: false })
+      .limit(20)
+  ]);
+
+  const snapshotsByProfile = new Map<string, Array<{ score: number | null; created_at: string }>>();
+  for (const item of snapshots ?? []) {
+    const bucket = snapshotsByProfile.get(item.profile_id) ?? [];
+    bucket.push({ score: item.score, created_at: item.created_at });
+    snapshotsByProfile.set(item.profile_id, bucket);
+  }
+
+  const latestSessionByOwner = new Map<string, string>();
+  for (const item of sessions ?? []) {
+    if (!latestSessionByOwner.has(item.owner_id)) {
+      latestSessionByOwner.set(item.owner_id, item.updated_at);
+    }
+  }
+
+  const signals = (students ?? []).map((student) => {
+    const studentSnapshots = snapshotsByProfile.get(student.id) ?? [];
+    const latestScore = studentSnapshots[0]?.score;
+    const previousScore = studentSnapshots[1]?.score;
+    const delta =
+      latestScore !== null && latestScore !== undefined && previousScore !== null && previousScore !== undefined
+        ? Number(latestScore) - Number(previousScore)
+        : null;
+
+    const status =
+      delta === null
+        ? "Belum cukup data"
+        : delta >= 5
+          ? "Naik"
+          : delta <= -5
+            ? "Perlu intervensi"
+            : "Stabil";
+
+    const trend =
+      delta === null
+        ? "0%"
+        : `${delta > 0 ? "+" : ""}${Math.round(delta)}%`;
+
+    return {
+      student: student.full_name,
+      subject: latestScore !== null && latestScore !== undefined ? `Skor terbaru ${Math.round(Number(latestScore))}` : "Belum ada snapshot",
+      status,
+      trend,
+      detail: `Snapshot ${studentSnapshots.length} • AI-RUM ${latestSessionByOwner.has(student.id) ? hoursAgo(latestSessionByOwner.get(student.id)) : "belum ada sesi"}`
+    };
+  });
+
+  const metrics = [
+    {
+      label: "Student profiles",
+      value: formatCount(students?.length ?? 0),
+      detail: "Profil student yang terbaca dari Supabase."
+    },
+    {
+      label: "Snapshot progres",
+      value: formatCount(snapshots?.length ?? 0),
+      detail: "Sumber sinyal performa terbaru."
+    },
+    {
+      label: "Student AI-RUM sessions",
+      value: formatCount(sessions?.length ?? 0),
+      detail: "Menunjukkan aktivitas pendamping belajar."
+    }
+  ];
+
+  return { metrics, signals };
 });
 
 export const getAiKnowledgeDashboardData = cache(async (): Promise<AiKnowledgeDashboardData> => {

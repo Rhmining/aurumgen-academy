@@ -28,6 +28,23 @@ export type MaterialRecord = {
   created_at: string;
 };
 
+export type CurriculumItemRecord = {
+  id: number;
+  title: string;
+  pathway: string;
+  subject: string;
+  owner_id?: string | null;
+  created_at: string;
+};
+
+export type ProgressSnapshotRecord = {
+  id: number;
+  profile_id: string;
+  score: number | null;
+  owner_id?: string | null;
+  created_at: string;
+};
+
 export type QuestionBankRecord = {
   id: number;
   subject: string;

@@ -16,13 +16,16 @@ const sections = [
 export function PortalShell({
   title,
   description,
-  children
+  children,
+  sections: customSections
 }: {
   title: string;
   description: string;
   children: ReactNode;
+  sections?: Array<{ href: string; label: string }>;
 }) {
   const pathname = usePathname();
+  const navSections = customSections ?? sections;
 
   return (
     <div className="page-shell px-6 py-8">
@@ -32,7 +35,7 @@ export function PortalShell({
           <h1 className="mt-4 font-display text-3xl">{title}</h1>
           <p className="mt-3 text-sm text-[rgb(var(--muted))]">{description}</p>
           <div className="mt-8 space-y-2">
-            {sections.map((section) => {
+            {navSections.map((section) => {
               const isActive =
                 section.href === "/portal/student" || section.href === "/portal/parent"
                   ? pathname === section.href

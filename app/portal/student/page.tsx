@@ -10,6 +10,12 @@ export default async function StudentPortalPage() {
     <PortalShell
       title="Student Portal"
       description="Lihat target minggu ini, materi prioritas, dan momentum belajar dalam satu tampilan."
+      sections={[
+        { href: "/portal/student", label: "Overview" },
+        { href: "/portal/materials", label: "Materials" },
+        { href: "/portal/curriculum", label: "Curriculum" },
+        { href: "/portal/progress", label: "Progress" }
+      ]}
     >
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {data.metrics.map((metric) => (
@@ -106,9 +112,9 @@ export default async function StudentPortalPage() {
                 detail: "Pantau subject mana yang naik, stabil, atau butuh remedial."
               },
               {
-                href: "/portal/parent",
-                title: "Lihat parent-facing update",
-                detail: "Pastikan narasi progres tetap sinkron dengan keluarga."
+                href: "/portal/student",
+                title: "Kembali ke overview belajar",
+                detail: "Gunakan dashboard utama untuk menutup sesi dengan target minggu ini."
               }
             ].map((action) => (
               <Link
