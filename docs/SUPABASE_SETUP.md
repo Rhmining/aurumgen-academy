@@ -47,6 +47,7 @@ Urutan file migration yang perlu dijalankan di SQL Editor atau Supabase CLI:
 24. [024_airum_rpc_write_path.sql](/Users/rachmathidayat/Documents/AURUMGEN%20ACADEMY/supabase/migrations/024_airum_rpc_write_path.sql)
 25. [025_portal_dashboard_policies.sql](/Users/rachmathidayat/Documents/AURUMGEN%20ACADEMY/supabase/migrations/025_portal_dashboard_policies.sql)
 26. [026_question_bank_hardening.sql](/Users/rachmathidayat/Documents/AURUMGEN%20ACADEMY/supabase/migrations/026_question_bank_hardening.sql)
+27. [027_progress_snapshot_workflow.sql](/Users/rachmathidayat/Documents/AURUMGEN%20ACADEMY/supabase/migrations/027_progress_snapshot_workflow.sql)
 
 ## 3. Konfigurasi Auth
 
@@ -131,3 +132,4 @@ Setelah setup selesai:
 - AIRUM gagal membuat session atau menyimpan chat: pastikan migration `024_airum_rpc_write_path.sql` sudah dijalankan.
 - Dashboard portal teacher/student/parent kosong atau error policy: pastikan migration `025_portal_dashboard_policies.sql` sudah dijalankan.
 - Question bank teacher tidak bisa create/edit/delete atau item tidak muncul konsisten: pastikan migration `026_question_bank_hardening.sql` sudah dijalankan.
+- Snapshot progress tidak bisa menyimpan subject/note atau teacher tracker terasa terlalu minim: pastikan migration `027_progress_snapshot_workflow.sql` sudah dijalankan.

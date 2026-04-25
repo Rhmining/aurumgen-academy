@@ -6,8 +6,9 @@ import { readJsonResponse } from "@/lib/api/read-json-response";
 type FieldConfig = {
   name: string;
   label: string;
-  type?: "text" | "textarea";
+  type?: "text" | "textarea" | "select";
   placeholder?: string;
+  options?: Array<{ label: string; value: string }>;
 };
 
 type ResourceManagerProps<T extends Record<string, unknown>> = {
@@ -142,6 +143,19 @@ export function ResourceManager<T extends Record<string, unknown>>({
                   className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3"
                   placeholder={field.placeholder}
                 />
+              ) : field.type === "select" ? (
+                <select
+                  value={form[field.name] ?? ""}
+                  onChange={(event) => updateField(field.name, event.target.value)}
+                  className="w-full rounded-2xl border border-black/10 bg-transparent px-4 py-3"
+                >
+                  <option value="">Pilih...</option>
+                  {(field.options ?? []).map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               ) : (
                 <input
                   value={form[field.name] ?? ""}

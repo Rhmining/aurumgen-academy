@@ -482,7 +482,7 @@ export const getPortalProgressData = cache(async (): Promise<PortalProgressData>
   const [snapshots, sessions, logs] = await Promise.all([
     supabase
       .from("progress_snapshots")
-      .select("score, created_at")
+      .select("score, subject, notes, created_at")
       .eq("profile_id", user.id)
       .gte("created_at", lastMonthIso)
       .order("created_at", { ascending: false })
@@ -535,8 +535,8 @@ export const getPortalProgressData = cache(async (): Promise<PortalProgressData>
 
   const timeline = [
     ...(snapshots.data ?? []).map((item) => ({
-      title: `Snapshot skor ${item.score ?? "-"}`,
-      detail: `${hoursAgo(item.created_at) ?? "baru"} • progress_snapshots`
+      title: `${item.subject ?? "General"} • skor ${item.score ?? "-"}`,
+      detail: `${hoursAgo(item.created_at) ?? "baru"} • ${item.notes || "progress_snapshots"}`
     })),
     ...(sessions.data ?? []).map((item) => ({
       title: item.title || "Sesi AI-RUM",

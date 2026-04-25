@@ -9,6 +9,7 @@ const sections = [
   { href: "/teacher", label: "Overview" },
   { href: "/teacher/materials", label: "Materials" },
   { href: "/teacher/question-bank", label: "Question Bank" },
+  { href: "/teacher/progress", label: "Progress" },
   { href: "/teacher/curriculum", label: "Curriculum" },
   { href: "/teacher/students", label: "Students" },
   { href: "/teacher/airum-test", label: "AI-RUM Test" },

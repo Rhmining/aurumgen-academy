@@ -70,6 +70,11 @@ export const workspaceConfigByRole: Record<UserRole, WorkspaceConfig> = {
         href: "/teacher/question-bank",
         title: "Buka question bank",
         detail: "Lengkapi answer key dan difficulty agar review lebih cepat."
+      },
+      {
+        href: "/teacher/progress",
+        title: "Catat progress snapshot",
+        detail: "Isi skor, subject, dan catatan agar portal student/parent tetap hidup."
       }
     ]
   },

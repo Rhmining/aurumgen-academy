@@ -41,6 +41,8 @@ export type ProgressSnapshotRecord = {
   id: number;
   profile_id: string;
   score: number | null;
+  subject?: string | null;
+  notes?: string | null;
   owner_id?: string | null;
   created_at: string;
 };
