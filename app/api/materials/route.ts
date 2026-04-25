@@ -6,10 +6,11 @@ export async function GET() {
   const session = await requireSupabaseUser();
   if ("error" in session) return session.error;
 
-  const { supabase } = session;
+  const { supabase, user } = session;
   const { data, error } = await supabase
     .from("materials")
     .select("*")
+    .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
 
   if (error) {

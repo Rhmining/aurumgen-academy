@@ -2,6 +2,12 @@ alter table if exists public.curriculum_items enable row level security;
 alter table if exists public.progress_snapshots enable row level security;
 alter table if exists public.profiles enable row level security;
 
+alter table if exists public.curriculum_items
+  add column if not exists owner_id uuid references public.profiles(id) on delete cascade;
+
+alter table if exists public.progress_snapshots
+  add column if not exists owner_id uuid references public.profiles(id) on delete cascade;
+
 drop policy if exists "curriculum_items_read_authenticated" on public.curriculum_items;
 create policy "curriculum_items_read_authenticated"
 on public.curriculum_items for select

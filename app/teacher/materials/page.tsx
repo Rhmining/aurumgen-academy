@@ -5,6 +5,7 @@ import { ResourceManager } from "@/components/data/resource-manager";
 import { StorageUploadPanel } from "@/components/data/storage-upload-panel";
 import { StorageFileActions } from "@/components/data/storage-file-actions";
 import type { MaterialRecord } from "@/lib/db/types";
+import { readJsonResponse } from "@/lib/api/read-json-response";
 
 export default function TeacherMaterialsPage() {
   return (
@@ -50,8 +51,39 @@ export default function TeacherMaterialsPage() {
           title: `${item.title} • ${item.subject}`,
           detail: `${item.pathway} • ${item.visibility}${item.file_name ? ` • File: ${item.file_name}` : ""}${item.description ? ` • ${item.description}` : ""}`
         })}
-        renderItemActions={({ item }) => (
-          <StorageFileActions bucket="materials" path={item.storage_path} />
+        renderItemActions={({ item, refresh, setStatus }) => (
+          <>
+            <div className="flex gap-2">
+              {[
+                { label: "Private", visibility: "private" },
+                { label: "Portal", visibility: "portal" },
+                { label: "Publish", visibility: "published" }
+              ].map((action) => (
+                <button
+                  key={action.visibility}
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const response = await fetch(`/api/materials/${item.id}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ visibility: action.visibility })
+                      });
+                      await readJsonResponse(response);
+                      setStatus(`Visibility materi diubah ke ${action.visibility}.`);
+                      await refresh();
+                    } catch (error) {
+                      setStatus(error instanceof Error ? error.message : "Gagal mengubah visibility.");
+                    }
+                  }}
+                  className="rounded-full border border-black/10 px-4 py-2 text-sm"
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
+            <StorageFileActions bucket="materials" path={item.storage_path} />
+          </>
         )}
       />
     </TeacherShell>
