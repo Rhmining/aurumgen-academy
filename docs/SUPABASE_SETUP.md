@@ -45,6 +45,8 @@ Urutan file migration yang perlu dijalankan di SQL Editor atau Supabase CLI:
 22. [022_repair_auth_profile_and_ai_policies.sql](/Users/rachmathidayat/Documents/AURUMGEN%20ACADEMY/supabase/migrations/022_repair_auth_profile_and_ai_policies.sql)
 23. [023_ai_ingestion_metadata_sync.sql](/Users/rachmathidayat/Documents/AURUMGEN%20ACADEMY/supabase/migrations/023_ai_ingestion_metadata_sync.sql)
 24. [024_airum_rpc_write_path.sql](/Users/rachmathidayat/Documents/AURUMGEN%20ACADEMY/supabase/migrations/024_airum_rpc_write_path.sql)
+25. [025_portal_dashboard_policies.sql](/Users/rachmathidayat/Documents/AURUMGEN%20ACADEMY/supabase/migrations/025_portal_dashboard_policies.sql)
+26. [026_question_bank_hardening.sql](/Users/rachmathidayat/Documents/AURUMGEN%20ACADEMY/supabase/migrations/026_question_bank_hardening.sql)
 
 ## 3. Konfigurasi Auth
 
@@ -127,3 +129,5 @@ Setelah setup selesai:
 - Extraction status dokumen tidak muncul: pastikan migration `019_ai_document_extraction_status.sql` sudah dijalankan.
 - Activity log operasional tidak muncul: pastikan migration `020_operational_activity_logs.sql` sudah dijalankan.
 - AIRUM gagal membuat session atau menyimpan chat: pastikan migration `024_airum_rpc_write_path.sql` sudah dijalankan.
+- Dashboard portal teacher/student/parent kosong atau error policy: pastikan migration `025_portal_dashboard_policies.sql` sudah dijalankan.
+- Question bank teacher tidak bisa create/edit/delete atau item tidak muncul konsisten: pastikan migration `026_question_bank_hardening.sql` sudah dijalankan.
