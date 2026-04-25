@@ -3,6 +3,7 @@
 import { TeacherShell } from "@/components/teacher/teacher-shell";
 import { ResourceManager } from "@/components/data/resource-manager";
 import type { QuestionBankRecord } from "@/lib/db/types";
+import { readJsonResponse } from "@/lib/api/read-json-response";
 
 export default function TeacherQuestionBankPage() {
   return (
@@ -23,8 +24,37 @@ export default function TeacherQuestionBankPage() {
         ]}
         renderSummary={(item) => ({
           title: `${item.subject} • ${item.difficulty}`,
-          detail: `${item.pathway} • ${item.exam_board} • ${item.prompt.slice(0, 110)}`
+          detail: `${item.pathway} • ${item.exam_board} • ${
+            item.answer_key?.trim() ? "Answer key siap" : "Perlu answer key"
+          }${item.tags?.length ? ` • Tags: ${item.tags.join(", ")}` : ""} • ${item.prompt.slice(0, 110)}`
         })}
+        renderItemActions={({ item, refresh, setStatus }) => (
+          <div className="flex gap-2">
+            {(["easy", "medium", "hard"] as const).map((difficulty) => (
+              <button
+                key={difficulty}
+                type="button"
+                onClick={async () => {
+                  try {
+                    const response = await fetch(`/api/question-bank/${item.id}`, {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ difficulty })
+                    });
+                    await readJsonResponse(response);
+                    setStatus(`Difficulty soal diubah ke ${difficulty}.`);
+                    await refresh();
+                  } catch (error) {
+                    setStatus(error instanceof Error ? error.message : "Gagal mengubah difficulty.");
+                  }
+                }}
+                className="rounded-full border border-black/10 px-4 py-2 text-sm"
+              >
+                {difficulty}
+              </button>
+            ))}
+          </div>
+        )}
       />
     </TeacherShell>
   );

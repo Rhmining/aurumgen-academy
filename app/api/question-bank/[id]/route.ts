@@ -2,6 +2,16 @@ import { NextResponse } from "next/server";
 import { normalizeArrayInput, requireSupabaseUser } from "@/lib/api/route-helpers";
 import { logOperationalEvent } from "@/lib/audit/log-operational-event";
 
+function normalizeDifficulty(value: unknown) {
+  const normalized = String(value ?? "medium").trim().toLowerCase();
+
+  if (normalized === "easy" || normalized === "hard") {
+    return normalized;
+  }
+
+  return "medium";
+}
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -12,21 +22,41 @@ export async function PATCH(
   const { supabase, user } = session;
   const body = await request.json();
   const { id } = await params;
+  const questionId = Number(id);
+
+  const { data: existing, error: existingError } = await supabase
+    .from("question_bank")
+    .select("*")
+    .eq("id", questionId)
+    .eq("owner_id", user.id)
+    .single();
+
+  if (existingError || !existing) {
+    return NextResponse.json(
+      { error: existingError?.message ?? "Soal tidak ditemukan." },
+      { status: 404 }
+    );
+  }
 
   const payload = {
-    subject: String(body.subject ?? "General"),
-    pathway: String(body.pathway ?? "IGCSE"),
-    difficulty: String(body.difficulty ?? "medium"),
-    exam_board: String(body.exam_board ?? "IGCSE"),
-    prompt: String(body.prompt ?? ""),
-    answer_key: String(body.answer_key ?? ""),
-    tags: normalizeArrayInput(body.tags)
+    subject: body.subject !== undefined ? String(body.subject) : existing.subject,
+    pathway: body.pathway !== undefined ? String(body.pathway) : existing.pathway,
+    difficulty:
+      body.difficulty !== undefined ? normalizeDifficulty(body.difficulty) : existing.difficulty,
+    exam_board: body.exam_board !== undefined ? String(body.exam_board) : existing.exam_board,
+    prompt: body.prompt !== undefined ? String(body.prompt) : existing.prompt,
+    answer_key:
+      body.answer_key !== undefined
+        ? (body.answer_key ? String(body.answer_key) : "")
+        : existing.answer_key,
+    tags: body.tags !== undefined ? normalizeArrayInput(body.tags) : existing.tags
   };
 
   const { data, error } = await supabase
     .from("question_bank")
     .update(payload)
-    .eq("id", Number(id))
+    .eq("id", questionId)
+    .eq("owner_id", user.id)
     .select("*")
     .single();
 
@@ -66,12 +96,18 @@ export async function DELETE(
     .from("question_bank")
     .select("id, subject, pathway, difficulty, exam_board, tags")
     .eq("id", questionId)
+    .eq("owner_id", user.id)
     .single();
+
+  if (!existing) {
+    return NextResponse.json({ error: "Soal tidak ditemukan." }, { status: 404 });
+  }
 
   const { error } = await supabase
     .from("question_bank")
     .delete()
-    .eq("id", questionId);
+    .eq("id", questionId)
+    .eq("owner_id", user.id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });

@@ -2,14 +2,25 @@ import { NextResponse } from "next/server";
 import { requireSupabaseUser, normalizeArrayInput } from "@/lib/api/route-helpers";
 import { logOperationalEvent } from "@/lib/audit/log-operational-event";
 
+function normalizeDifficulty(value: unknown) {
+  const normalized = String(value ?? "medium").trim().toLowerCase();
+
+  if (normalized === "easy" || normalized === "hard") {
+    return normalized;
+  }
+
+  return "medium";
+}
+
 export async function GET() {
   const session = await requireSupabaseUser();
   if ("error" in session) return session.error;
 
-  const { supabase } = session;
+  const { supabase, user } = session;
   const { data, error } = await supabase
     .from("question_bank")
     .select("*")
+    .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -29,7 +40,7 @@ export async function POST(request: Request) {
   const payload = {
     subject: String(body.subject ?? "General"),
     pathway: String(body.pathway ?? "IGCSE"),
-    difficulty: String(body.difficulty ?? "medium"),
+    difficulty: normalizeDifficulty(body.difficulty),
     exam_board: String(body.exam_board ?? "IGCSE"),
     prompt: String(body.prompt ?? ""),
     answer_key: String(body.answer_key ?? ""),
