@@ -58,7 +58,7 @@ function buildStarter(role: UserRole): ChatEntry[] {
   return [{ role: "assistant", content: starterMessages[role], sources: [] }];
 }
 
-export function AirumChat({ role }: { role: UserRole }) {
+export function AirumChat({ role, draftPrompt }: { role: UserRole; draftPrompt?: string }) {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatEntry[]>(buildStarter(role));
@@ -133,6 +133,12 @@ export function AirumChat({ role }: { role: UserRole }) {
   useEffect(() => {
     void loadSessions();
   }, []);
+
+  useEffect(() => {
+    if (draftPrompt) {
+      setInput(draftPrompt);
+    }
+  }, [draftPrompt]);
 
   async function handleNewChat() {
     setActiveSessionId(null);

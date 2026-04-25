@@ -1,9 +1,14 @@
+ "use client";
+
+import { useState } from "react";
 import { airumModes } from "@/lib/airum/modes";
 import { quickPrompts } from "@/lib/airum/quick-prompts";
 import { AirumChat } from "@/components/airum/airum-chat";
 import type { UserRole } from "@/lib/db/types";
 
 export function AirumPanel({ role = "student" }: { role?: UserRole }) {
+  const [draftPrompt, setDraftPrompt] = useState("");
+
   return (
     <section className="space-y-6">
       <div className="surface rounded-[2rem] p-6">
@@ -24,15 +29,20 @@ export function AirumPanel({ role = "student" }: { role?: UserRole }) {
             <p className="text-sm font-semibold">Quick prompts</p>
             <div className="mt-4 space-y-3">
               {quickPrompts.map((prompt) => (
-                <div key={prompt} className="rounded-2xl bg-black/5 px-4 py-3 text-sm dark:bg-white/5">
+                <button
+                  key={prompt}
+                  type="button"
+                  onClick={() => setDraftPrompt(prompt)}
+                  className="block w-full rounded-2xl bg-black/5 px-4 py-3 text-left text-sm transition hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10"
+                >
                   {prompt}
-                </div>
+                </button>
               ))}
             </div>
           </div>
         </div>
       </div>
-      <AirumChat role={role} />
+      <AirumChat role={role} draftPrompt={draftPrompt} />
     </section>
   );
 }

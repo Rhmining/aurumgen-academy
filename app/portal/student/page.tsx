@@ -76,6 +76,57 @@ export default async function StudentPortalPage() {
 
       <section className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
         <article className="surface rounded-[2rem] p-6">
+          <p className="eyebrow">Rencana sesi</p>
+          <h2 className="mt-3 font-display text-3xl">Urutan belajar yang paling ringan dijalankan</h2>
+          <div className="mt-6 space-y-4">
+            {[
+              {
+                title: "1. Buka satu materi portal terbaru",
+                detail: "Mulai dari materials untuk membaca topik terbaru sebelum bertanya ke AI-RUM.",
+                href: "/portal/materials"
+              },
+              {
+                title: "2. Cek progress snapshot terakhir",
+                detail: "Lihat subject mana yang naik, stabil, atau butuh remedial sebelum lanjut latihan.",
+                href: "/portal/progress"
+              },
+              {
+                title: "3. Tanya AI-RUM dengan konteks yang spesifik",
+                detail: "Gunakan quick prompt atau tulis pertanyaan berdasarkan materi yang baru dibaca.",
+                href: "/portal/student"
+              }
+            ].map((step) => (
+              <Link
+                key={step.title}
+                href={step.href}
+                className="block rounded-[1.5rem] border border-black/5 p-5 transition hover:border-black/10 hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/5"
+              >
+                <h3 className="font-semibold">{step.title}</h3>
+                <p className="mt-2 text-sm text-[rgb(var(--muted))]">{step.detail}</p>
+              </Link>
+            ))}
+          </div>
+        </article>
+
+        <article className="surface rounded-[2rem] p-6">
+          <p className="eyebrow">Belajar lebih fokus</p>
+          <h2 className="mt-3 font-display text-3xl">Cara memakai portal ini dengan efektif</h2>
+          <div className="mt-6 space-y-3">
+            {[
+              "Mulai dari materi terbaru, lalu tulis satu pertanyaan ke AI-RUM berdasarkan bagian yang belum jelas.",
+              "Kalau snapshot progres turun atau stagnan, buka progress center dulu sebelum pindah topik baru.",
+              "Gunakan curriculum map untuk tahu apakah topik ini inti pathway atau hanya penguatan tambahan."
+            ].map((tip) => (
+              <div key={tip} className="rounded-[1.5rem] bg-black/5 px-5 py-4 text-sm dark:bg-white/5">
+                {tip}
+              </div>
+            ))}
+          </div>
+        </article>
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+        <article className="surface rounded-[2rem] p-6">
           <p className="eyebrow">Activity snapshot</p>
           <h2 className="mt-3 font-display text-3xl">Data nyata dari penggunaanmu</h2>
           <div className="mt-6 space-y-4">
@@ -113,8 +164,8 @@ export default async function StudentPortalPage() {
               },
               {
                 href: "/portal/student",
-                title: "Kembali ke overview belajar",
-                detail: "Gunakan dashboard utama untuk menutup sesi dengan target minggu ini."
+                title: "Lanjutkan ke AI-RUM di halaman ini",
+                detail: "Gunakan quick prompts di bawah untuk mengubah materi dan progres menjadi sesi tanya jawab."
               }
             ].map((action) => (
               <Link
