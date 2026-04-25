@@ -9,6 +9,7 @@ import type { UserRole } from "@/lib/db/types";
 import { buildSessionTitle } from "@/lib/airum/session-title";
 import { evaluateAirumResponse } from "@/lib/airum/evaluate-response";
 import { fetchOpenAiJson } from "@/lib/openai/fetch-json";
+import { extractOpenAiOutputText } from "@/lib/openai/extract-output-text";
 import { enforceRateLimit } from "@/lib/api/rate-limit";
 import { formatSupabaseError, requireSupabaseUser } from "@/lib/api/route-helpers";
 
@@ -104,7 +105,7 @@ export async function POST(request: Request) {
       retries: 1
     });
 
-    const outputText = payload.output_text ?? "";
+    const outputText = extractOpenAiOutputText(payload);
     const sources = Array.isArray(retrieval.sources) ? (retrieval.sources as RetrievalSource[]) : [];
     const evaluation = await evaluateAirumResponse(latestUserMessage, outputText, sources);
     const { data: recordData, error: recordError } = await supabase.rpc("record_airum_turn", {

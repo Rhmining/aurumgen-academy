@@ -1,3 +1,6 @@
+import { fetchOpenAiJson } from "@/lib/openai/fetch-json";
+import { extractOpenAiOutputText } from "@/lib/openai/extract-output-text";
+
 type Source = {
   title?: string;
   category?: string;
@@ -52,9 +55,9 @@ function evaluateAirumResponseHeuristic(answer: string, sources: Source[]): Eval
   const answerScore = Math.max(0, Math.min(1, (answerLength >= 240 ? 0.5 : answerLength / 480) + retrievalScore * 0.5));
 
   const flags: string[] = [];
-  if (sourceCount === 0) flags.push('no_sources');
-  if (avgSimilarity < 0.45) flags.push('low_similarity');
-  if (answerLength < 120) flags.push('short_answer');
+  if (sourceCount === 0) flags.push("no_sources");
+  if (avgSimilarity < 0.45) flags.push("low_similarity");
+  if (answerLength < 120) flags.push("short_answer");
 
   return {
     retrievalScore,
@@ -124,7 +127,7 @@ export async function evaluateAirumResponse(
       retries: 1
     });
 
-    const parsed = tryParseJsonObject(String(payload.output_text ?? ""));
+    const parsed = tryParseJsonObject(extractOpenAiOutputText(payload));
     if (!parsed || typeof parsed !== "object") {
       throw new Error("Output evaluator tidak bisa diparse.");
     }
@@ -154,4 +157,3 @@ export async function evaluateAirumResponse(
     };
   }
 }
-import { fetchOpenAiJson } from "@/lib/openai/fetch-json";
