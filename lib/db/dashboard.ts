@@ -32,6 +32,7 @@ type PortalMaterialsData = {
     description: string | null;
     storagePath: string | null;
     fileName: string | null;
+    mimeType: string | null;
   }>;
   bySubject: Array<{ label: string; value: string; detail: string }>;
 };
@@ -495,7 +496,7 @@ export const getPortalMaterialsData = cache(async (): Promise<PortalMaterialsDat
 
   const { data: materials } = await supabase
     .from("materials")
-    .select("title, subject, pathway, visibility, description, storage_path, file_name, created_at")
+    .select("title, subject, pathway, visibility, description, storage_path, file_name, mime_type, created_at")
     .in("visibility", ["portal", "published"])
     .order("created_at", { ascending: false })
     .limit(12);
@@ -507,7 +508,8 @@ export const getPortalMaterialsData = cache(async (): Promise<PortalMaterialsDat
       .join(" • "),
     description: item.description ?? null,
     storagePath: item.storage_path ?? null,
-    fileName: item.file_name ?? null
+    fileName: item.file_name ?? null,
+    mimeType: item.mime_type ?? null
   }));
 
   const bySubjectMap = new Map<string, number>();

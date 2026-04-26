@@ -39,6 +39,7 @@ export default async function PortalMaterialsPage() {
                 bucket="materials"
                 path={item.storagePath}
                 fileName={item.fileName}
+                mimeType={item.mimeType}
                 previewLabel="Buka materi"
                 downloadLabel="Unduh"
               />

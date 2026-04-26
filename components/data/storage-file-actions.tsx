@@ -44,6 +44,10 @@ export function StorageFileActions({
     const extension = resolveExtension();
     const normalizedMime = String(mimeType ?? "").toLowerCase();
 
+    if (extension === "html" || normalizedMime.includes("text/html")) {
+      return `/api/materials/view?path=${encodeURIComponent(safePath)}`;
+    }
+
     if (officeExtensions.has(extension)) {
       return `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(signedUrl)}`;
     }
