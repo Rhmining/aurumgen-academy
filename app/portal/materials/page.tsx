@@ -34,7 +34,13 @@ export default async function PortalMaterialsPage() {
             <p className="mt-3 text-sm text-[rgb(var(--muted))]">{item.detail}</p>
             {item.description ? <p className="mt-3 text-sm text-[rgb(var(--muted))]">{item.description}</p> : null}
             <div className="mt-4 flex flex-wrap gap-2">
-              <StorageFileActions bucket="materials" path={item.storagePath} previewLabel="Buka materi" downloadLabel="Unduh" />
+              <StorageFileActions
+                bucket="materials"
+                path={item.storagePath}
+                fileName={item.fileName}
+                previewLabel="Buka materi"
+                downloadLabel="Unduh"
+              />
             </div>
             {!item.storagePath ? (
               <p className="mt-3 text-xs text-[rgb(var(--muted))]">
