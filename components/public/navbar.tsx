@@ -64,11 +64,7 @@ export function Navbar() {
     <header className="sticky top-0 z-30 border-b border-black/5 bg-[rgba(var(--background),0.78)] backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-3.5">
         <Link href="/" className="shrink-0">
-          <BrandLogo
-            className="min-w-fit"
-            markClassName="h-11 w-11 md:h-12 md:w-12"
-            textClassName="min-w-fit"
-          />
+          <BrandLogo className="min-w-fit" />
         </Link>
         <nav className="hidden items-center gap-6 text-sm md:flex">
           {links.map((link) => (

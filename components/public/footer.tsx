@@ -25,7 +25,7 @@ export function PublicFooter() {
     <footer className="border-t border-black/5 bg-[rgba(var(--panel),0.55)]">
       <div className="mx-auto grid max-w-7xl gap-8 px-6 py-10 lg:grid-cols-[1.3fr_0.7fr_0.7fr]">
         <div className="space-y-4">
-          <BrandLogo markClassName="h-12 w-12" textClassName="text-xl" />
+          <BrandLogo />
           <p className="max-w-xl text-sm text-[rgb(var(--muted))]">
             Academy platform untuk keluarga yang ingin jalur belajar lebih jelas, pelaporan progres lebih rapi,
             dan dukungan AI-RUM yang menyatu dengan workflow guru serta knowledge base internal.
