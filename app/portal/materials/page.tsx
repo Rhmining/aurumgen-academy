@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PortalShell } from "@/components/portal/portal-shell";
+import { StorageFileActions } from "@/components/data/storage-file-actions";
 import { getPortalMaterialsData } from "@/lib/db/dashboard";
 
 export default async function PortalMaterialsPage() {
@@ -31,6 +32,15 @@ export default async function PortalMaterialsPage() {
           <article key={`${item.title}-${item.detail}`} className="surface rounded-[1.75rem] p-6">
             <h2 className="font-semibold">{item.title}</h2>
             <p className="mt-3 text-sm text-[rgb(var(--muted))]">{item.detail}</p>
+            {item.description ? <p className="mt-3 text-sm text-[rgb(var(--muted))]">{item.description}</p> : null}
+            <div className="mt-4 flex flex-wrap gap-2">
+              <StorageFileActions bucket="materials" path={item.storagePath} previewLabel="Buka materi" downloadLabel="Unduh" />
+            </div>
+            {!item.storagePath ? (
+              <p className="mt-3 text-xs text-[rgb(var(--muted))]">
+                Materi ini belum punya file terhubung. Gunakan ringkasan subject/pathway sebagai panduan diskusi sementara.
+              </p>
+            ) : null}
           </article>
         ))}
       </section>

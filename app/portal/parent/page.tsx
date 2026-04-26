@@ -72,6 +72,41 @@ export default async function ParentPortalPage() {
           </div>
         </article>
       </section>
+
+      <section className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+        <article className="surface rounded-[2rem] p-6">
+          <p className="eyebrow">Langkah pendampingan</p>
+          <h2 className="mt-3 font-display text-3xl">Urutan paling sederhana untuk mendampingi minggu ini</h2>
+          <div className="mt-6 space-y-4">
+            {data.helperSteps.map((step) => (
+              <Link
+                key={step.title}
+                href={step.href}
+                className="block rounded-[1.5rem] border border-black/5 p-5 transition hover:border-black/10 hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/5"
+              >
+                <h3 className="font-semibold">{step.title}</h3>
+                <p className="mt-2 text-sm text-[rgb(var(--muted))]">{step.detail}</p>
+              </Link>
+            ))}
+          </div>
+        </article>
+
+        <article className="surface rounded-[2rem] p-6">
+          <p className="eyebrow">Cara memakai portal</p>
+          <h2 className="mt-3 font-display text-3xl">Supaya parent portal terasa membantu, bukan membingungkan</h2>
+          <div className="mt-6 space-y-3">
+            {[
+              "Mulai dari progress center agar diskusi keluarga bertumpu pada sinyal nyata, bukan asumsi.",
+              "Gunakan materials untuk memahami konteks subject sebelum memberi masukan atau dorongan belajar.",
+              "Kalau butuh bantuan merangkum, masuk ke overview parent lalu pakai AI-RUM untuk menyusun percakapan yang lebih tenang."
+            ].map((tip) => (
+              <div key={tip} className="rounded-[1.5rem] bg-black/5 p-5 text-sm text-[rgb(var(--muted))] dark:bg-white/5">
+                {tip}
+              </div>
+            ))}
+          </div>
+        </article>
+      </section>
     </PortalShell>
   );
 }

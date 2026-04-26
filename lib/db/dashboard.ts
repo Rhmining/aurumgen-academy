@@ -21,11 +21,18 @@ type ParentDashboardData = {
   metrics: Array<{ label: string; value: string; detail: string }>;
   highlights: Array<{ title: string; body: string; href: string }>;
   recentSignals: Array<{ title: string; detail: string }>;
+  helperSteps: Array<{ title: string; detail: string; href: string }>;
 };
 
 type PortalMaterialsData = {
   role: UserRole;
-  featured: Array<{ title: string; detail: string }>;
+  featured: Array<{
+    title: string;
+    detail: string;
+    description: string | null;
+    storagePath: string | null;
+    fileName: string | null;
+  }>;
   bySubject: Array<{ label: string; value: string; detail: string }>;
 };
 
@@ -39,6 +46,7 @@ type PortalCurriculumData = {
   role: UserRole;
   items: Array<{ title: string; detail: string }>;
   summary: Array<{ label: string; value: string; detail: string }>;
+  programTracks: Array<{ title: string; detail: string }>;
 };
 
 type TeacherStudentsData = {
@@ -57,6 +65,7 @@ type DeveloperDashboardData = {
   metrics: Array<{ label: string; value: string; detail: string }>;
   runbook: Array<{ title: string; detail: string; href: string }>;
   shortcuts: Array<{ href: string; title: string; detail: string }>;
+  recentSignals: Array<{ title: string; detail: string; href: string }>;
 };
 
 function formatCount(value: number | null | undefined) {
@@ -369,7 +378,7 @@ export const getStudentDashboardData = cache(async (): Promise<StudentDashboardD
 export const getParentDashboardData = cache(async (): Promise<ParentDashboardData> => {
   const { supabase, user } = await getAuthedSupabase();
   if (!user) {
-    return { metrics: [], highlights: [], recentSignals: [] };
+    return { metrics: [], highlights: [], recentSignals: [], helperSteps: [] };
   }
 
   const lastWeekIso = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -457,7 +466,25 @@ export const getParentDashboardData = cache(async (): Promise<ParentDashboardDat
     }))
   ].slice(0, 4);
 
-  return { metrics, highlights, recentSignals };
+  const helperSteps = [
+    {
+      title: "1. Buka progress center lebih dulu",
+      detail: "Lihat snapshot terbaru sebelum berdiskusi soal materi atau target remedial.",
+      href: "/portal/progress"
+    },
+    {
+      title: "2. Baca satu materi yang sedang aktif",
+      detail: "Gunakan materials untuk memahami konteks akademik yang sedang dikerjakan anak.",
+      href: "/portal/materials"
+    },
+    {
+      title: "3. Gunakan AI-RUM untuk merangkum",
+      detail: "Setelah paham progress dan materi, minta ringkasan atau pertanyaan diskusi dari portal utama.",
+      href: "/portal/parent"
+    }
+  ];
+
+  return { metrics, highlights, recentSignals, helperSteps };
 });
 
 export const getPortalMaterialsData = cache(async (): Promise<PortalMaterialsData> => {
@@ -468,7 +495,7 @@ export const getPortalMaterialsData = cache(async (): Promise<PortalMaterialsDat
 
   const { data: materials } = await supabase
     .from("materials")
-    .select("title, subject, pathway, visibility, description, created_at")
+    .select("title, subject, pathway, visibility, description, storage_path, file_name, created_at")
     .in("visibility", ["portal", "published"])
     .order("created_at", { ascending: false })
     .limit(12);
@@ -477,7 +504,10 @@ export const getPortalMaterialsData = cache(async (): Promise<PortalMaterialsDat
     title: item.title,
     detail: [item.subject, item.pathway ?? "-", item.visibility, hoursAgo(item.created_at) ?? "baru"]
       .filter(Boolean)
-      .join(" • ")
+      .join(" • "),
+    description: item.description ?? null,
+    storagePath: item.storage_path ?? null,
+    fileName: item.file_name ?? null
   }));
 
   const bySubjectMap = new Map<string, number>();
@@ -579,7 +609,7 @@ export const getPortalProgressData = cache(async (): Promise<PortalProgressData>
 export const getPortalCurriculumData = cache(async (): Promise<PortalCurriculumData> => {
   const { supabase, user, role } = await getAuthedRole();
   if (!user) {
-    return { role, items: [], summary: [] };
+    return { role, items: [], summary: [], programTracks: [] };
   }
 
   const [curriculumItems, materials] = await Promise.all([
@@ -615,7 +645,22 @@ export const getPortalCurriculumData = cache(async (): Promise<PortalCurriculumD
       detail: "Jumlah materi yang mendukung pathway ini."
     }));
 
-  return { role, items, summary };
+  const programTracks = [
+    {
+      title: "IGCSE Core Pathway",
+      detail: "Fondasi konsep, latihan terstruktur, dan materi inti untuk transisi belajar yang stabil."
+    },
+    {
+      title: "IB Progression Track",
+      detail: "Ritme belajar yang lebih analitis dengan fokus konsep, refleksi, dan jawaban yang argumentatif."
+    },
+    {
+      title: "AURUMGEN Learning Cycle",
+      detail: "Baca materi, cek progress, lalu pakai AI-RUM untuk memperjelas konsep dan menutup gap belajar."
+    }
+  ];
+
+  return { role, items, summary, programTracks };
 });
 
 export const getTeacherStudentsData = cache(async (): Promise<TeacherStudentsData> => {
@@ -807,12 +852,12 @@ export const getAiKnowledgeDashboardData = cache(async (): Promise<AiKnowledgeDa
 export const getDeveloperDashboardData = cache(async (): Promise<DeveloperDashboardData> => {
   const { supabase, user } = await getAuthedSupabase();
   if (!user) {
-    return { metrics: [], runbook: [], shortcuts: [] };
+    return { metrics: [], runbook: [], shortcuts: [], recentSignals: [] };
   }
 
   const lastWeekIso = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  const [materialsCount, questionBankCount, aiDocsCount, failedAiDocsCount, ownLogs] = await Promise.all([
+  const [materialsCount, questionBankCount, aiDocsCount, failedAiDocsCount, ownLogs, recentMaterials, recentDocs] = await Promise.all([
     supabase.from("materials").select("*", { count: "exact", head: true }),
     supabase.from("question_bank").select("*", { count: "exact", head: true }),
     supabase.from("ai_documents").select("*", { count: "exact", head: true }),
@@ -825,6 +870,16 @@ export const getDeveloperDashboardData = cache(async (): Promise<DeveloperDashbo
       .select("action, entity_type, entity_id, created_at")
       .eq("actor_id", user.id)
       .gte("created_at", lastWeekIso)
+      .order("created_at", { ascending: false })
+      .limit(3),
+    supabase
+      .from("materials")
+      .select("title, subject, visibility, created_at")
+      .order("created_at", { ascending: false })
+      .limit(3),
+    supabase
+      .from("ai_documents")
+      .select("title, status, ingestion_status, created_at")
       .order("created_at", { ascending: false })
       .limit(3)
   ]);
@@ -897,5 +952,18 @@ export const getDeveloperDashboardData = cache(async (): Promise<DeveloperDashbo
     }
   ];
 
-  return { metrics, runbook, shortcuts };
+  const recentSignals = [
+    ...(recentMaterials.data ?? []).map((item) => ({
+      title: item.title,
+      detail: `${item.subject} • ${item.visibility} • ${hoursAgo(item.created_at) ?? "baru"}`,
+      href: "/developer/pipeline"
+    })),
+    ...(recentDocs.data ?? []).map((item) => ({
+      title: item.title,
+      detail: `${item.status} • ${item.ingestion_status ?? "-"} • ${hoursAgo(item.created_at) ?? "baru"}`,
+      href: "/developer/logs"
+    }))
+  ].slice(0, 4);
+
+  return { metrics, runbook, shortcuts, recentSignals };
 });
