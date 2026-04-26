@@ -672,10 +672,11 @@ export const getTeacherStudentsData = cache(async (): Promise<TeacherStudentsDat
   const [{ data: students }, { data: snapshots }, { data: sessions }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, full_name")
+      .select("id, full_name, pathway, stage")
       .eq("role", "student")
+      .eq("teacher_owner_id", user.id)
       .order("created_at", { ascending: false })
-      .limit(6),
+      .limit(12),
     supabase
       .from("progress_snapshots")
       .select("profile_id, score, created_at")
@@ -728,10 +729,13 @@ export const getTeacherStudentsData = cache(async (): Promise<TeacherStudentsDat
 
     return {
       student: student.full_name,
-      subject: latestScore !== null && latestScore !== undefined ? `Skor terbaru ${Math.round(Number(latestScore))}` : "Belum ada snapshot",
+      subject:
+        latestScore !== null && latestScore !== undefined
+          ? `${student.pathway ?? "General"} • Skor terbaru ${Math.round(Number(latestScore))}`
+          : `${student.pathway ?? "General"} • Belum ada snapshot`,
       status,
       trend,
-      detail: `Snapshot ${studentSnapshots.length} • AI-RUM ${latestSessionByOwner.has(student.id) ? hoursAgo(latestSessionByOwner.get(student.id)) : "belum ada sesi"}`
+      detail: `${student.stage ?? "active"} • Snapshot ${studentSnapshots.length} • AI-RUM ${latestSessionByOwner.has(student.id) ? hoursAgo(latestSessionByOwner.get(student.id)) : "belum ada sesi"}`
     };
   });
 
@@ -739,7 +743,7 @@ export const getTeacherStudentsData = cache(async (): Promise<TeacherStudentsDat
     {
       label: "Student profiles",
       value: formatCount(students?.length ?? 0),
-      detail: "Profil student yang terbaca dari Supabase."
+      detail: "Student yang sudah Anda daftarkan di workspace teacher."
     },
     {
       label: "Snapshot progres",

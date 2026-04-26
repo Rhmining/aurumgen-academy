@@ -8,9 +8,11 @@ type TeacherProgressRecord = ProgressSnapshotRecord & {
 };
 
 export function ProgressManager({
-  studentOptions
+  studentOptions,
+  initialStudentId
 }: {
   studentOptions: Array<{ label: string; value: string }>;
+  initialStudentId?: string;
 }) {
   return (
     <ResourceManager<TeacherProgressRecord>
@@ -19,7 +21,7 @@ export function ProgressManager({
       description="Catat snapshot skor singkat per siswa agar portal student dan parent selalu punya sinyal progres terbaru."
       emptyState="Belum ada snapshot progres. Tambahkan data pertama dari panel kiri."
       initialForm={{
-        profile_id: studentOptions[0]?.value ?? "",
+        profile_id: initialStudentId ?? studentOptions[0]?.value ?? "",
         subject: "General",
         score: "",
         notes: ""

@@ -10,7 +10,20 @@ export type ProfileRecord = {
   id: string;
   full_name: string;
   role: UserRole;
+  email?: string | null;
+  pathway?: string | null;
+  stage?: "lead" | "active" | "paused" | "alumni" | null;
+  guardian_name?: string | null;
+  guardian_email?: string | null;
+  mentor_notes?: string | null;
+  teacher_owner_id?: string | null;
   created_at: string;
+};
+
+export type StudentDirectoryRecord = ProfileRecord & {
+  snapshot_count?: number;
+  latest_score?: number | null;
+  latest_session_at?: string | null;
 };
 
 export type MaterialRecord = {

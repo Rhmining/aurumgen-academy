@@ -43,7 +43,7 @@ export function ResourceManager<T extends Record<string, unknown>>({
 }: ResourceManagerProps<T>) {
   const [items, setItems] = useState<T[]>([]);
   const [form, setForm] = useState<Record<string, string>>(initialForm ?? {});
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -93,7 +93,7 @@ export function ResourceManager<T extends Record<string, unknown>>({
     }
   }
 
-  async function handleDelete(id: number) {
+  async function handleDelete(id: string) {
     setStatus(null);
     try {
       const response = await fetch(`${endpoint}/${id}`, { method: "DELETE" });
@@ -107,7 +107,7 @@ export function ResourceManager<T extends Record<string, unknown>>({
   }
 
   function handleEdit(item: T) {
-    setEditingId(Number(item.id));
+    setEditingId(String(item.id));
     const nextForm = Object.entries(item).reduce<Record<string, string>>(
       (accumulator, [key, value]) => {
         if (typeof value === "string" || typeof value === "number") {
@@ -221,7 +221,7 @@ export function ResourceManager<T extends Record<string, unknown>>({
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleDelete(Number(item.id))}
+                      onClick={() => handleDelete(String(item.id))}
                       className="rounded-full border border-coral/30 px-4 py-2 text-sm text-coral"
                     >
                       Hapus

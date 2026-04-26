@@ -48,6 +48,7 @@ Urutan file migration yang perlu dijalankan di SQL Editor atau Supabase CLI:
 25. [025_portal_dashboard_policies.sql](/Users/rachmathidayat/Documents/AURUMGEN%20ACADEMY/supabase/migrations/025_portal_dashboard_policies.sql)
 26. [026_question_bank_hardening.sql](/Users/rachmathidayat/Documents/AURUMGEN%20ACADEMY/supabase/migrations/026_question_bank_hardening.sql)
 27. [027_progress_snapshot_workflow.sql](/Users/rachmathidayat/Documents/AURUMGEN%20ACADEMY/supabase/migrations/027_progress_snapshot_workflow.sql)
+28. [028_student_directory_workspace.sql](/Users/rachmathidayat/Documents/AURUMGEN%20ACADEMY/supabase/migrations/028_student_directory_workspace.sql)
 
 ## 3. Konfigurasi Auth
 
@@ -81,6 +82,10 @@ Cara paling mudah:
 3. Buat akun baru untuk setiap role yang dibutuhkan: `student`, `parent`, `teacher`, `aiadmin`, `developer`.
 
 Saat signup, metadata `full_name` dan `role` akan dikirim ke Supabase Auth, lalu trigger `handle_new_user()` akan otomatis membuat atau memperbarui record di tabel `profiles`.
+
+Catatan tambahan untuk teacher workspace:
+- Halaman `/teacher/students` dipakai untuk membangun **student directory** lengkap dengan guardian dan pathway.
+- Directory ini membantu teacher mengelola progres, tetapi akun login student tetap dibuat lewat flow signup biasa sampai invite/admin-auth flow ditambahkan terpisah.
 
 ## 5. Jalankan seed data
 
@@ -133,3 +138,4 @@ Setelah setup selesai:
 - Dashboard portal teacher/student/parent kosong atau error policy: pastikan migration `025_portal_dashboard_policies.sql` sudah dijalankan.
 - Question bank teacher tidak bisa create/edit/delete atau item tidak muncul konsisten: pastikan migration `026_question_bank_hardening.sql` sudah dijalankan.
 - Snapshot progress tidak bisa menyimpan subject/note atau teacher tracker terasa terlalu minim: pastikan migration `027_progress_snapshot_workflow.sql` sudah dijalankan.
+- Teacher tidak bisa menambah atau mengedit student dari workspace teacher: pastikan migration `028_student_directory_workspace.sql` sudah dijalankan.
