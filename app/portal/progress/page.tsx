@@ -4,6 +4,7 @@ import { getPortalProgressData } from "@/lib/db/dashboard";
 
 export default async function PortalProgressPage() {
   const data = await getPortalProgressData();
+  const overviewHref = data.role === "parent" ? "/portal/parent" : "/portal/student";
 
   return (
     <PortalShell
@@ -68,8 +69,8 @@ export default async function PortalProgressPage() {
                 detail: "Pastikan Anda paham posisi topik yang sedang naik atau turun."
               },
               {
-                href: "/portal/student",
-                title: "Buka AI-RUM di overview",
+                href: overviewHref,
+                title: data.role === "parent" ? "Kembali ke parent overview" : "Buka AI-RUM di overview",
                 detail: "Gunakan note progress terbaru sebagai prompt diskusi belajar."
               }
             ].map((action) => (

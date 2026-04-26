@@ -5,6 +5,7 @@ import { getPortalMaterialsData } from "@/lib/db/dashboard";
 
 export default async function PortalMaterialsPage() {
   const data = await getPortalMaterialsData();
+  const overviewHref = data.role === "parent" ? "/portal/parent" : "/portal/student";
 
   return (
     <PortalShell
@@ -84,8 +85,8 @@ export default async function PortalMaterialsPage() {
                 detail: "Lihat apakah materi ini termasuk inti pathway atau penguatan tambahan."
               },
               {
-                href: "/portal/student",
-                title: "Tanya AI-RUM dari overview",
+                href: overviewHref,
+                title: data.role === "parent" ? "Buka parent overview" : "Tanya AI-RUM dari overview",
                 detail: "Gunakan quick prompts untuk mengubah materi menjadi diskusi belajar yang lebih aktif."
               }
             ].map((action) => (

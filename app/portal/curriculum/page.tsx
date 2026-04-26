@@ -3,6 +3,7 @@ import { getPortalCurriculumData } from "@/lib/db/dashboard";
 
 export default async function PortalCurriculumPage() {
   const data = await getPortalCurriculumData();
+  const overviewHref = data.role === "parent" ? "/portal/parent" : "/portal/student";
 
   return (
     <PortalShell
@@ -77,8 +78,8 @@ export default async function PortalCurriculumPage() {
                 detail: "Pastikan topik yang sedang dipelajari sesuai dengan snapshot progres terbaru."
               },
               {
-                href: "/portal/student",
-                title: "Masuk ke AI-RUM",
+                href: overviewHref,
+                title: data.role === "parent" ? "Kembali ke parent overview" : "Masuk ke AI-RUM",
                 detail: "Tanyakan konsep yang masih belum jelas berdasarkan curriculum dan materials."
               }
             ].map((action) => (

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PortalShell } from "@/components/portal/portal-shell";
+import { AirumPanel } from "@/components/airum/airum-panel";
 import { getParentDashboardData } from "@/lib/db/dashboard";
 
 export default async function ParentPortalPage() {
@@ -107,6 +108,52 @@ export default async function ParentPortalPage() {
           </div>
         </article>
       </section>
+
+      <section className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
+        <article className="surface rounded-[2rem] p-6">
+          <p className="eyebrow">Pendampingan yang elegan</p>
+          <h2 className="mt-3 font-display text-3xl">Gunakan parent portal sebagai ruang membaca konteks, bukan ruang mengontrol</h2>
+          <div className="mt-6 space-y-3">
+            {[
+              "Baca progress dulu, lalu materials, baru ajak anak berdiskusi dengan pertanyaan yang lembut dan spesifik.",
+              "Gunakan curriculum map untuk memahami posisi topik, agar ekspektasi keluarga tetap realistis.",
+              "Kalau perlu ringkasan singkat, pakai AI-RUM mode parent untuk menyusun briefing belajar di rumah."
+            ].map((tip) => (
+              <div key={tip} className="rounded-[1.5rem] bg-black/5 p-5 text-sm text-[rgb(var(--muted))] dark:bg-white/5">
+                {tip}
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <article className="surface rounded-[2rem] p-6">
+          <p className="eyebrow">Arah percakapan</p>
+          <h2 className="mt-3 font-display text-3xl">Tiga jenis diskusi rumah yang paling membantu</h2>
+          <div className="mt-6 grid gap-3">
+            {[
+              {
+                title: "Apa topik yang paling terasa berat minggu ini?",
+                detail: "Mulai dari perasaan dan hambatan, bukan langsung dari nilai."
+              },
+              {
+                title: "Materi mana yang paling perlu dibuka ulang?",
+                detail: "Gunakan daftar materials untuk menunjuk satu fokus yang realistis."
+              },
+              {
+                title: "Bantuan seperti apa yang paling dibutuhkan?",
+                detail: "Pakai AI-RUM untuk merangkum opsi: penjelasan ulang, latihan, atau pacing ulang."
+              }
+            ].map((item) => (
+              <div key={item.title} className="rounded-[1.5rem] border border-black/5 p-5 dark:border-white/10">
+                <h3 className="font-semibold">{item.title}</h3>
+                <p className="mt-2 text-sm text-[rgb(var(--muted))]">{item.detail}</p>
+              </div>
+            ))}
+          </div>
+        </article>
+      </section>
+
+      <AirumPanel role="parent" />
     </PortalShell>
   );
 }
